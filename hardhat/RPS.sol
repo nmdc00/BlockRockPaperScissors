@@ -22,20 +22,32 @@ contract RockPaperScissors {
     GameStatus status;
   }
 
+  // State variables
   address public owner; //fixed game creator address 
-
   // Creating an address for each unique game and tracking number of games created for book keeping
   mapping(uint256 => Game) public games;
   uint256 public gameCounter;
 
   // Logs for key actions like game creation, second player joining, revealing the moves
-  event GameCreated(uint256 indexed gameId, address indexed player1, uint256 betAmount);
-  event PlayerJoined(uint256 indexed gameId, address indexed player2);
+  event GameCreated(uint256 indexed gameId, uint256 betAmount);
+  event PlayerJoined(uint256 indexed gameId, address indexed player);
   event MovesCommitted(uint256 indexed gameId, address indexed player);
   event MovesRevealed(uint256 indexed gameId, address indexed player, Move move);
   event GameCompleted(uint256 indexed gameId, address indexed winner, uint256 pot);
 
-  function createGame(bytes32 hashedMove) externable payable returns(unit256) {
+
+  // Owner restriction modifier
+  modifier onlyOwner() {
+    require(msg.sender == owner, "Only the owner can create games");
+    _;
+  }
+
+  // Constructor to initialize the owner
+  constructor() {
+    owner = msg.sender;
+  }
+
+  function createGame(bytes32 hashedMove) external payable returns(uint256) {
     require(msg.value > 0, "Bet amount must be greater than zero");
     require(hashedMove != bytes32(0), "Move is required");
     
@@ -43,12 +55,30 @@ contract RockPaperScissors {
 
     Game storage game = games[gameCounter];
 
-    game.player1 = Player(payable(msg.sender), hashedMove, Move.None);
     game.pot = msg.value;
     game.status = GameStatus.WaitingForPlayers;
 
-    emit GameCreated(gameCounter, msg.sender, msg.value);
+    emit GameCreated(gameCounter, msg.value);
 
     return gameCounter;
+  }
+
+  function joinGame(uint256 gameId, bytes32 hashedMove) external payable {
+    Game storage game = games[gameId];
+    require(game.status == GameStatus.WaitingForPlayers, "Game is not waiting for players");
+    require(msg.value == game.pot, "Bet amount must match the pot");
+    require(hashedMove != bytes32(0), "Hashed move is required");
+
+    // address(0) can be used to verify whether an address has been properly initialized or assigned. 
+    // If a variable holds the value address(0) it indicates that the address has not been set or is invalid, enabling smart contracts to handle such cases accordingly.
+    if (game.player1.addr == address(0)) {
+      game.player1 = Player(payable(msg.sender), hashedMove, Move.None);
+    } else {
+      require(game.player2.addr == address(0), "Game Already has two players");
+      game.pot += msg.value;
+      game.status = GameStatus.MovesCommitted;
+    }
+
+    emit PlayerJoined(gameId, msg.sender);
   }
 }
