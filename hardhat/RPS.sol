@@ -22,6 +22,8 @@ contract RockPaperScissors {
     GameStatus status;
   }
 
+  address public owner; //fixed game creator address 
+
   // Creating an address for each unique game and tracking number of games created for book keeping
   mapping(uint256 => Game) public games;
   uint256 public gameCounter;
@@ -47,6 +49,6 @@ contract RockPaperScissors {
 
     emit GameCreated(gameCounter, msg.sender, msg.value);
 
-    return gameCounter
+    return gameCounter;
   }
 }
