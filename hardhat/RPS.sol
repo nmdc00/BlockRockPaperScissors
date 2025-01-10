@@ -81,4 +81,31 @@ contract RockPaperScissors {
 
     emit PlayerJoined(gameId, msg.sender);
   }
+
+  function revealMove(uint256 gameId, Move move, string memory secret) external {
+    Game storage game = games[gameId];
+
+    require(game.status == GameStatus.MovesCommitted, "Game is not in reveal phase");
+
+    require(move != Move.None, "Invalid move");
+
+    require (
+      msg.sender == game.player1.addr || msg.sender == game.player2.addr,
+      "Only game participants can reveal moves"
+    );
+
+    Player storage player = msg.sender == game.player1.addr? game.player1 : game.player2;
+
+    require(player.revealedMove == Move.None, "Move already revealed");
+
+    require(keccak256(abi.encodePacked(move, secret)) == player.hashedMove, "Move does not match");
+
+    player.revealedMove = move;
+
+    emit MovesRevealed(gameId, msg.sender, move);
+
+    if (game.player1.revealedMove != Move.None && game.player2.revealedMove != Move.None) {
+      determineWinner(gameId);
+    }
+  }
 }
