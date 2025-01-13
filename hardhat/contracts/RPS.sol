@@ -108,4 +108,32 @@ contract RockPaperScissors {
       determineWinner(gameId);
     }
   }
+
+  function determineWinner(uint256 gameId) private {
+    Game storage game = games[gameId];
+    
+    require(game.player1.revealedMove != Move.None, "Player1 move not revealed");
+    require(game.player2.revealedMove != Move.None, "Player2 move not revealed");
+
+    address payable winner;
+
+    if (game.player1.revealedMove == game.player2.revealedMove) {
+      game.player1.addr.transfer(game.pot / 2);
+      game.player2.addr.transfer(game.pot / 2);
+    }
+    else if (
+      (game.player1.revealedMove == Move.Rock && game.player2.revealedMove == Move.Scissors) ||
+      (game.player1.revealedMove == Move.Scissors && game.player2.revealedMove == Move.Paper ) ||
+      (game.player1.revealedMove == Move.Paper && game.player2.revealedMove == Move.Rock)
+    ) {
+      winner = game.player1.addr;
+    }
+
+    if (winner != address(0)) {
+      winner.transfer(game.pot);
+      emit GameCompleted(gameId, winner, game.pot);
+    }
+
+    game.status = GameStatus.Completed;
+  }
 }
