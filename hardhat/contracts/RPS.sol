@@ -73,10 +73,15 @@ contract RockPaperScissors {
     // If a variable holds the value address(0) it indicates that the address has not been set or is invalid, enabling smart contracts to handle such cases accordingly.
     if (game.player1.addr == address(0)) {
       game.player1 = Player(payable(msg.sender), hashedMove, Move.None);
-    } else {
-      require(game.player2.addr == address(0), "Game Already has two players");
+      game.pot += msg.value;
+    } else if (game.player2.addr == address(0)) {
+      require(msg.sender != game.player1.addr, "Player1 cannot join again");
+      require(msg.value == game.pot, "Bet amount must watch Player1's bet");
+      game.player2 = Player(payable(msg.sender), hashedMove, Move.None);
       game.pot += msg.value;
       game.status = GameStatus.MovesCommitted;
+    } else {
+      revert("Game already has two players");
     }
 
     emit PlayerJoined(gameId, msg.sender);

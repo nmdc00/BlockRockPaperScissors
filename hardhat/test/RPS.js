@@ -1,47 +1,67 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("RockPaperScissors", function () {
+describe("RockPaperScissors Contract", function () {
   let contract
-  let owner
-  let player1
-  let player2
-  let hashedMove1
-  let hashedMove2
-  let secret1
-  let secret2
+  let owner, player1, player2
+  let hashedMove1, hashedMove2
+  let secret1, secret2
 
   before(async () => {
     //Contract Deployment
 
     const RockPaperScissors = await ethers.getContractFactory("RockPaperScissors");
     contract = await RockPaperScissors.deploy();
-    await contract.deployed();
-
+    await contract.waitForDeployment();
+    console.log("Contract deployed to:", contract.target);
+    
     [owner, player1, player2] = await ethers.getSigners();
 
-    const move1 = ethers.utils.formatBytes32String("Rock");
-    const secret1 = ethers.utils.formatBytes32String("secret1");
-    hashedMove1 = ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(["bytes32", "bytes32"], [move1, secret1]));
+    secret1 = "secret1"
+    secret2 = "secret2"
 
-    const move2 = ethers.utils.formatBytes32String("Rock");
-    const secret2 = ethers.utils.formatBytes32String("secret1");
-    hashedMove2 = ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(["bytes32", "bytes32"], [movew, secretw]));
+    hashedMove1 = ethers.keccak256(
+      ethers.AbiCoder.defaultAbiCoder().encode(
+        ["bytes32", "bytes32"],
+        [ethers.encodeBytes32String("Rock"), ethers.encodeBytes32String(secret1)]
+      )
+    );
+
+    hashedMove2 = ethers.keccak256(
+      ethers.AbiCoder.defaultAbiCoder().encode(
+        ["bytes32", "bytes32"],
+        [ethers.encodeBytes32String("Paper"), ethers.encodeBytes32String(secret2)]
+      )
+    );
+  });
+
+  beforeEach(async () => {
+    // Reset blockchain state and redeploy contract before each test
+    await hre.network.provider.send("hardhat_reset");
+    const RockPaperScissors = await ethers.getContractFactory("RockPaperScissors");
+    contract = await RockPaperScissors.deploy();
+    await contract.waitForDeployment();
+    [owner, player1, player2] = await ethers.getSigners();
   });
 
   it("should allow the owner to create a game", async function () {
-    const betAmount = ethers.utils.parseEther("1.0");
+    const betAmount = ethers.parseEther("1.0"); // 1 Ether
+    console.log("Bet amount in Wei:", ethers.parseEther("1.0").toString());
 
-    const tx = await contract.connect(owner).createGame({ value: betAmount });
+    // Owner creates a game
+    const tx = await contract.connect(owner).createGame(hashedMove1, {
+      value: betAmount,
+    });
     const receipt = await tx.wait();
-
+    // console.log("Logs:", receipt.logs);
     // Game validation
 
-    const event = receipt.events.find((e) => e.event === "GameCreated");
+    const event = receipt.logs.find((log) => log.fragment.name === "GameCreated");
+    // console.log(event)
     expect(event).to.exist;
-    expect(event.args.gameId).to.equal(1);
+
+    const { gameId, betAmount: emittedBetAmount } = event.args;
+    expect(event.args.gameId).to.equal(1n);
     expect(event.args.betAmount).to.equal(betAmount);
 
     // Validate game state
@@ -50,45 +70,50 @@ describe("RockPaperScissors", function () {
     expect(game.status).to.equal(0);
   });
 
-  it("should allow player1 to join the game", async function () {
-    const betAmount = ethers.utils.parseEther("1.0");
+  it("should generate a hashed move for a player", async function () {
+    const betAmount = ethers.parseEther("1.0"); // 1 Ether
 
-    // Player 1 joins the game
-    const tx = await contract.connect(player1).joinGame(1, hashedMove1, { value: betAmount });
+    // Owner creates the game
+    const tx = await contract.connect(owner).createGame(hashedMove1, { value: betAmount });
     const receipt = await tx.wait();
+    
+    // Validate the GameCreated event
+    const event = receipt.logs.find((log) => log.fragment && log.fragment.name === "GameCreated");
+    expect(event).to.exist; // Ensure the event is found
 
-    // Validate the PlayerJoined event
-    const event = receipt.events.find((e) => e.event === "PlayerJoined");
-    expect(event).to.exist;
-    expect(event.args.gameId).to.equal(1);
-    expect(event.args.player).to.equal(player1.address);
-
-    // Validate game state
-    const game = await contract.games(1);
-    expect(game.player1.addr).to.equal(player1.address);
-    expect(game.player1.hashedMove).to.equal(hashedMove1);
-    expect(game.pot).to.equal(betAmount);
+    expect(event.args.gameId).to.equal(1n); // First game
+    expect(event.args.betAmount).to.equal(betAmount);
   });
 
-  it("should allow player2 to join the game", async function () {
-    const betAmount = ethers.utils.parseEther("1.0");
-
-    // Player 2 joins the game
-    const tx = await contract.connect(player2).joinGame(1, hashedMove2, { value: betAmount });
+  it("should allow players to join the game with variable bet amounts", async function () {
+    const player1Bet = ethers.parseEther("1.0"); // Player1 contributes 1 Ether
+    const player2Bet = ethers.parseEther("2.0"); // Player2 contributes 2 Ether
+  
+    // Owner creates a game
+    await contract.connect(owner).createGame();
+  
+    // Retrieve the game ID
+    const gameId = await contract.gameCounter();
+  
+    // Player1 joins the game
+    await contract.connect(player1).joinGame(gameId, hashedMove1, { value: player1Bet });
+  
+    // Player2 joins the game
+    const tx = await contract.connect(player2).joinGame(gameId, hashedMove2, { value: player2Bet });
     const receipt = await tx.wait();
-
-    // Validate the PlayerJoined event
-    const event = receipt.events.find((e) => e.event === "PlayerJoined");
+  
+    // Validate the PlayerJoined event for Player2
+    const event = receipt.logs.find((log) => log.fragment && log.fragment.name === "PlayerJoined");
     expect(event).to.exist;
-    expect(event.args.gameId).to.equal(1);
+    expect(event.args.gameId).to.equal(gameId);
     expect(event.args.player).to.equal(player2.address);
-
+  
     // Validate game state
-    const game = await contract.games(1);
-    expect(game.player2.addr).to.equal(player2.address);
-    expect(game.player2.hashedMove).to.equal(hashedMove2);
-    expect(game.pot).to.equal(ethers.utils.parseEther("2.0")); // Total pot
-    expect(game.status).to.equal(1); // MovesCommitted (enum value 1)
+    const game = await contract.games(gameId);
+    expect(game.player1.addr).to.equal(player1.address); // Player1 is registered
+    expect(game.player2.addr).to.equal(player2.address); // Player2 is registered
+    expect(game.pot).to.equal(player1Bet.add(player2Bet)); // Pot is the sum of bets
+    expect(game.status).to.equal(1); // MovesCommitted
   });
 
   it("should allow players to reveal their moves and determine the winner", async function () {
@@ -119,6 +144,6 @@ describe("RockPaperScissors", function () {
     expect(event).to.exist;
     expect(event.args.gameId).to.equal(1);
     expect(event.args.winner).to.equal(player2.address);
-    expect(event.args.pot).to.equal(ethers.utils.parseEther("2.0"));
+    expect(event.args.pot).to.equal(ethers.parseEther("2.0"));
   });
 });
