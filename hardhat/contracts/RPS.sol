@@ -32,7 +32,7 @@ contract RockPaperScissors {
   event GameCreated(uint256 indexed gameId, uint256 betAmount);
   event PlayerJoined(uint256 indexed gameId, address indexed player);
   event MovesCommitted(uint256 indexed gameId, address indexed player);
-  event MovesRevealed(uint256 indexed gameId, address indexed player, Move move);
+  event MoveRevealed(uint256 indexed gameId, address indexed player, Move move);
   event GameCompleted(uint256 indexed gameId, address indexed winner, uint256 pot);
 
 
@@ -47,26 +47,25 @@ contract RockPaperScissors {
     owner = msg.sender;
   }
 
-  function createGame(bytes32 hashedMove) external payable returns(uint256) {
-    require(msg.value > 0, "Bet amount must be greater than zero");
-    require(hashedMove != bytes32(0), "Move is required");
-    
+  function createGame() external returns (uint256) {
+
     gameCounter++;
 
     Game storage game = games[gameCounter];
 
-    game.pot = msg.value;
+    game.pot = 0;
     game.status = GameStatus.WaitingForPlayers;
 
-    emit GameCreated(gameCounter, msg.value);
+    emit GameCreated(gameCounter, 0);
 
     return gameCounter;
   }
 
   function joinGame(uint256 gameId, bytes32 hashedMove) external payable {
     Game storage game = games[gameId];
+
     require(game.status == GameStatus.WaitingForPlayers, "Game is not waiting for players");
-    require(msg.value == game.pot, "Bet amount must match the pot");
+    require(msg.value > 0, "Bet amount must be greater than 0");
     require(hashedMove != bytes32(0), "Hashed move is required");
 
     // address(0) can be used to verify whether an address has been properly initialized or assigned. 
@@ -76,7 +75,7 @@ contract RockPaperScissors {
       game.pot += msg.value;
     } else if (game.player2.addr == address(0)) {
       require(msg.sender != game.player1.addr, "Player1 cannot join again");
-      require(msg.value == game.pot, "Bet amount must watch Player1's bet");
+      require(msg.value == game.pot, "Bet amount must match Player1's bet");
       game.player2 = Player(payable(msg.sender), hashedMove, Move.None);
       game.pot += msg.value;
       game.status = GameStatus.MovesCommitted;
@@ -99,18 +98,22 @@ contract RockPaperScissors {
       "Only game participants can reveal moves"
     );
 
-    Player storage player = msg.sender == game.player1.addr? game.player1 : game.player2;
-
+    // Identify the player and ensure they haven't already revealed their move
+    Player storage player = msg.sender == game.player1.addr ? game.player1 : game.player2;
     require(player.revealedMove == Move.None, "Move already revealed");
 
+    // Verify the revealed move matches the hashed move
     require(keccak256(abi.encodePacked(move, secret)) == player.hashedMove, "Move does not match");
 
+    // Store the revealed move
     player.revealedMove = move;
 
-    emit MovesRevealed(gameId, msg.sender, move);
+    // Emit event for move reveal
+    emit MoveRevealed(gameId, msg.sender, move);
 
+    // If both players have revealed their moves, determine the winner
     if (game.player1.revealedMove != Move.None && game.player2.revealedMove != Move.None) {
-      determineWinner(gameId);
+        determineWinner(gameId);
     }
   }
 
