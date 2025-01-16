@@ -1,20 +1,15 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+const DEPLOYED_CONTRACT_ADDRESS = '0xAE52aaF189431983a4F4EFCAb13E865FC9CE2dfC'
+
 describe("RockPaperScissors Contract", function () {
-  let contract
-  let owner, player1, player2
-  let hashedMove1, hashedMove2
-  let secret1, secret2
+  let contract;
+  let owner, player1, player2;
+  let hashedMove1, hashedMove2;
+  let secret1, secret2;
 
   before(async () => {
-    //Contract Deployment
-
-    const RockPaperScissors = await ethers.getContractFactory("RockPaperScissors");
-    contract = await RockPaperScissors.deploy();
-    await contract.waitForDeployment();
-    console.log("Contract deployed to:", contract.target);
-    
     [owner, player1, player2] = await ethers.getSigners();
 
     secret1 = "secret1"
@@ -36,12 +31,18 @@ describe("RockPaperScissors Contract", function () {
   });
 
   beforeEach(async () => {
-    // Reset blockchain state and redeploy contract before each test
-    await hre.network.provider.send("hardhat_reset");
-    const RockPaperScissors = await ethers.getContractFactory("RockPaperScissors");
-    contract = await RockPaperScissors.deploy();
-    await contract.waitForDeployment();
-    [owner, player1, player2] = await ethers.getSigners();
+    if (DEPLOYED_CONTRACT_ADDRESS) {
+      const RockPaperScissors = await ethers.getContractFactory("RockPaperScissors");
+      contract = await RockPaperScissors.attach(DEPLOYED_CONTRACT_ADDRESS);
+      console.log("Using deployed contract at:", DEPLOYED_CONTRACT_ADDRESS);
+    } else {
+      [owner, player1, player2] = await ethers.getSigners();
+
+      const RockPaperScissors = await ethers.getContractFactory("RockPaperScissors");
+      contract = await RockPaperScissors.deploy();
+      await contract.waitForDeployment();
+      console.log("Contract deployed to:", contract.target);
+    }
   });
 
   it("should allow the owner to create a game", async function () {
