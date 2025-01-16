@@ -30,7 +30,8 @@ contract RockPaperScissors {
 
   // Logs for key actions like game creation, second player joining, revealing the moves
   event GameCreated(uint256 indexed gameId, uint256 betAmount);
-  event PlayerJoined(uint256 indexed gameId, address indexed player);
+  // event PlayerJoined(uint256 indexed gameId, address indexed player);
+  event PlayerJoined(uint256 indexed gameId, address indexed player, bytes32 hashedMove, uint256 betAmount);
   event MovesCommitted(uint256 indexed gameId, address indexed player);
   event MoveRevealed(uint256 indexed gameId, address indexed player, Move move);
   event GameCompleted(uint256 indexed gameId, address indexed winner, uint256 pot);
@@ -73,17 +74,19 @@ contract RockPaperScissors {
     if (game.player1.addr == address(0)) {
       game.player1 = Player(payable(msg.sender), hashedMove, Move.None);
       game.pot += msg.value;
+      emit PlayerJoined(gameId, msg.sender, hashedMove, msg.value); // Emit hashedMove for debugging
     } else if (game.player2.addr == address(0)) {
       require(msg.sender != game.player1.addr, "Player1 cannot join again");
       require(msg.value == game.pot, "Bet amount must match Player1's bet");
       game.player2 = Player(payable(msg.sender), hashedMove, Move.None);
       game.pot += msg.value;
       game.status = GameStatus.MovesCommitted;
+      emit PlayerJoined(gameId, msg.sender, hashedMove, msg.value);
     } else {
       revert("Game already has two players");
     }
-
-    emit PlayerJoined(gameId, msg.sender);
+    
+    // emit PlayerJoined(gameId, msg.sender);
   }
 
   function revealMove(uint256 gameId, Move move, string memory secret) external {

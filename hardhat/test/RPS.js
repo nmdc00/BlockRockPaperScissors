@@ -131,7 +131,8 @@ describe("RockPaperScissors Contract", function () {
 
   it("should allow players to reveal their moves and determine the winner", async function () {
     const betAmount = ethers.parseEther("1.0");
-  
+    console.log("Player1's hashedMove:", hashedMove1);
+
     // Owner creates a game
     await contract.connect(owner).createGame();
   
