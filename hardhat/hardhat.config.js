@@ -17,6 +17,9 @@ module.exports = {
   solidity: "0.8.20", // Set the Solidity version to match your contracts
   defaultNetwork: "sepolia",
   networks: {
+    localhost: {
+      url: "http://127.0.0.1:8545",
+    },
     sepolia: {
       chainId: 11155111, // Set the Sepolia local network chain ID
       url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,

@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
-
 pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract RockPaperScissors {
   // enum = user-defined data type consisting of a ser of named values, called members
@@ -104,6 +105,18 @@ contract RockPaperScissors {
     // Identify the player and ensure they haven't already revealed their move
     Player storage player = msg.sender == game.player1.addr ? game.player1 : game.player2;
     require(player.revealedMove == Move.None, "Move already revealed");
+
+    bytes32 expectedHash = keccak256(abi.encodePacked(move, secret));
+    require(
+    expectedHash == player.hashedMove,
+        string.concat(
+            "Move does not match. Expected: ",
+            Strings.toHexString(uint256(player.hashedMove)), // Correctly cast bytes32
+            " Got: ",
+            Strings.toHexString(uint256(expectedHash)) // Correctly cast bytes32
+        )
+    );
+
 
     // Verify the revealed move matches the hashed move
     require(keccak256(abi.encodePacked(move, secret)) == player.hashedMove, "Move does not match");
