@@ -36,6 +36,8 @@ contract RockPaperScissors {
   event MovesCommitted(uint256 indexed gameId, address indexed player);
   event MoveRevealed(uint256 indexed gameId, address indexed player, Move move);
   event GameCompleted(uint256 indexed gameId, address indexed winner, uint256 pot);
+  event DebugHash(bytes32 expected, bytes32 actual);
+  event DebugInput(uint8 move, string message);
 
 
   // Owner restriction modifier
@@ -94,6 +96,7 @@ contract RockPaperScissors {
     Game storage game = games[gameId];
 
     require(game.status == GameStatus.MovesCommitted, "Game is not in reveal phase");
+    emit DebugInput(uint8(move), "Game phase validated");
 
     require(move != Move.None, "Invalid move");
 
@@ -101,12 +104,16 @@ contract RockPaperScissors {
       msg.sender == game.player1.addr || msg.sender == game.player2.addr,
       "Only game participants can reveal moves"
     );
+     emit DebugInput(uint8(move), "Participant check passed");
 
     // Identify the player and ensure they haven't already revealed their move
     Player storage player = msg.sender == game.player1.addr ? game.player1 : game.player2;
     require(player.revealedMove == Move.None, "Move already revealed");
+    emit DebugInput(uint8(move), "Revealed move check passed");
 
-    bytes32 expectedHash = keccak256(abi.encodePacked(move, secret));
+    bytes32 expectedHash = keccak256(abi.encode(move, secret));
+    emit DebugInput(uint8(move), "Hash check passed");
+
     require(
     expectedHash == player.hashedMove,
         string.concat(
@@ -117,17 +124,15 @@ contract RockPaperScissors {
         )
     );
 
-
-    // Verify the revealed move matches the hashed move
-    require(keccak256(abi.encodePacked(move, secret)) == player.hashedMove, "Move does not match");
-
-    // Store the revealed move
+    // If checks pass, update the revealed move
     player.revealedMove = move;
 
-    // Emit event for move reveal
+    // Debugging output
+    emit DebugInput(uint8(move), "Revealed move updated");
+
     emit MoveRevealed(gameId, msg.sender, move);
 
-    // If both players have revealed their moves, determine the winner
+    // Check if both players have revealed their moves
     if (game.player1.revealedMove != Move.None && game.player2.revealedMove != Move.None) {
         determineWinner(gameId);
     }
@@ -139,7 +144,7 @@ contract RockPaperScissors {
     require(game.player1.revealedMove != Move.None, "Player1 move not revealed");
     require(game.player2.revealedMove != Move.None, "Player2 move not revealed");
 
-    address payable winner;
+    address payable winner = payable(address(0)); // Default to no winner
 
     if (game.player1.revealedMove == game.player2.revealedMove) {
       game.player1.addr.transfer(game.pot / 2);
@@ -151,13 +156,13 @@ contract RockPaperScissors {
       (game.player1.revealedMove == Move.Paper && game.player2.revealedMove == Move.Rock)
     ) {
       winner = game.player1.addr;
-    }
-
-    if (winner != address(0)) {
       winner.transfer(game.pot);
-      emit GameCompleted(gameId, winner, game.pot);
+    } else {
+      winner = game.player2.addr;
+      winner.transfer(game.pot);
     }
-
+    
+    emit GameCompleted(gameId, winner, game.pot);
     game.status = GameStatus.Completed;
   }
 }

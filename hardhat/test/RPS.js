@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { assert } = require("chai");
 require("dotenv").config();
 const DEPLOYED_CONTRACT_ADDRESS = process.env.DEPLOYED_CONTRACT_ADDRESS || "";
 
@@ -8,7 +9,7 @@ describe("RockPaperScissors Contract", function () {
   let owner, player1, player2;
   let hashedMove1, hashedMove2;
   let secret1, secret2;
-
+  
   before(async () => {
     [owner, player1, player2] = await ethers.getSigners();
 
@@ -28,6 +29,8 @@ describe("RockPaperScissors Contract", function () {
         [2, secret2]
       )
     );
+
+    // console.log("Player1 Hashed Move:", hashedMove1);
   });
 
   beforeEach(async () => {
@@ -169,7 +172,8 @@ describe("RockPaperScissors Contract", function () {
 
   it("should allow players to reveal their moves and determine the winner", async function () {
     const betAmount = ethers.parseEther("1.0");
-    console.log("Player1's hashedMove:", hashedMove1);
+    console.log("Player1 Hashed Move (Test):", hashedMove1);
+    console.log("RevealMove Inputs: move =", 1, "secret =", secret1);
 
     // Owner creates a game
     await contract.connect(owner).createGame();
@@ -179,38 +183,72 @@ describe("RockPaperScissors Contract", function () {
   
     // Player2 joins the game
     await contract.connect(player2).joinGame(1, hashedMove2, { value: betAmount });
-  
+    
     // Validate that the game status is MovesCommitted
     const game = await contract.games(1);
+    console.log("Player1 Revealed Move:", game.player1.revealedMove.toString());
+    console.log("Player2 Revealed Move:", game.player2.revealedMove.toString());
+    console.log("Game Status:", game.status.toString());
+
     expect(game.status).to.equal(1); // MovesCommitted (enum value 1)
   
     // Player 1 reveals their move
     let tx = await contract.connect(player1).revealMove(1, 1, secret1); // Move.Rock = 1
+
     let receipt = await tx.wait();
   
     // Validate the MoveRevealed event for Player1
-    let event = receipt.logs.find((log) => log.fragment && log.fragment.name === "MoveRevealed");
+    let event = receipt.logs
+    .map((log) => contract.interface.parseLog(log))
+    .find((parsedLog) => parsedLog.name === "MoveRevealed");
+
     expect(event).to.exist;
     expect(event.args.gameId).to.equal(1);
     expect(event.args.player).to.equal(player1.address);
     expect(event.args.move).to.equal(1); // Rock
-  
+    gameId = event.args.gameId
     // Player 2 reveals their move
     tx = await contract.connect(player2).revealMove(1, 2, secret2); // Move.Paper = 2
     receipt = await tx.wait();
   
     // Validate the MoveRevealed event for Player2
-    event = receipt.logs.find((log) => log.fragment && log.fragment.name === "MoveRevealed");
+    event = receipt.logs
+    .map((log) => contract.interface.parseLog(log))
+    .find((parsedLog) => parsedLog.name === "MoveRevealed");
+
     expect(event).to.exist;
     expect(event.args.gameId).to.equal(1);
     expect(event.args.player).to.equal(player2.address);
     expect(event.args.move).to.equal(2); // Paper
-  
+
     // Validate the GameCompleted event
-    event = receipt.logs.find((log) => log.fragment && log.fragment.name === "GameCompleted");
-    expect(event).to.exist;
-    expect(event.args.gameId).to.equal(1);
-    expect(event.args.winner).to.equal(player2.address);
-    expect(event.args.pot).to.equal(betAmount.mul(2)); // Total pot is the sum of both bets
+    const gameCompletedEvent = receipt.logs.find(
+      (log) => log.fragment && log.fragment.name === "GameCompleted"
+    );
+
+    console.log("WINNER WINNER CHICKEN WINNER", gameCompletedEvent.args.winner)
+    console.log("player1", player1.address)
+    console.log("player2", player2.address)
+    // console.log(receipt.logs)
+    //console.log("GameCompleted Event:", gameCompletedEvent); // Add this debug log
+    expect(gameCompletedEvent).to.exist;
+    expect(gameCompletedEvent.args.gameId).to.equal(1);
+    expect(gameCompletedEvent.args.winner).to.equal(player2.address);
+    const potinETH = Number(game.pot.toString()) / 1e18;
+    expect(gameCompletedEvent.args.pot).to.equal(game.pot); // Total pot is the sum of both bets
+
+    // Act: Capture the transaction logs
+    let gameEvent = receipt.logs
+    .map((log) => contract.interface.parseLog(log))
+    .find((parsedLog) => parsedLog.name === "GameCompleted");
+    // console.log("gameEvent",gameEvent.args[0].toString())
+    // const gameEvent = receipt.events.find(e => e.event === "GameCompleted");
+
+    // Assert: Validate event existence and parameters
+    assert(gameEvent, "GameCompleted event not found in transaction logs");
+    assert.strictEqual(gameEvent.args[0].toString(), gameId.toString(), "Game ID mismatch");
+    assert.strictEqual(gameEvent.args[1], player2.address, "Winner mismatch");
+    assert.strictEqual(gameEvent.args[2].toString(), (BigInt(betAmount) * 2n).toString(), "Pot mismatch");
+
   });
 });
