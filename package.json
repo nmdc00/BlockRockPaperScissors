@@ -1,0 +1,21 @@
+{
+  "name": "rps_dapp",
+  "packageManager": "yarn@4.4.1",
+  "dependencies": {
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "@walletconnect/web3-provider": "^1.8.0",
+    "dotenv": "^16.4.7",
+    "esbuild": "^0.24.2",
+    "ethers": "^6.13.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "dotenv-webpack": "^8.1.0",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.7.3",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
+  }
+}

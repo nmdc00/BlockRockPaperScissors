@@ -8,9 +8,17 @@
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   </head>
 
   <body>
     <%= yield %>
   </body>
+
+  <script>
+  window.ENV = {
+    CONTRACT_ADDRESS: "<%= ENV['CONTRACT_ADDRESS'] %>"
+    CONTRACT_ABI: " <%= ENV['CONTRACT_ABI'] %>"
+  };
+</script>
 </html>
