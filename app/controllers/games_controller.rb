@@ -11,7 +11,11 @@ class GamesController < ApplicationController
 			@game = Game.new(game_params)
 			@game.status = 'WaitingForPlayers'
 
-			@game.save ? redirect_to games_path, notice: 'Game created successfully' : render :new, status: :unprocessable_entity
+			if @game.save
+				redirect_to games_path, notice: 'Game created successfully'
+			else
+				render :new, status: :unprocessable_entity
+			end
 		end
 
 		def join 

@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
-    "resolveJsonModule": true,
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "strict": true,
+    "resolveJsonModule": true,
     "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "jsx": "react"
+    "lib": ["DOM", "ESNext"]
   },
-  "include": ["app/javascript/components/**/*"],
+  "include": ["app/javascript/**/*"],
   "exclude": ["node_modules", "dist"]
 }

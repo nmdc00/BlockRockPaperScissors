@@ -1,9 +1,11 @@
-import { ethers } from "ethers";
+import { ethers, BrowserProvider } from "ethers";
 import contractABI from "../contractABI.json";
 
 const CONTRACT_ADRESS = process.env.CONTRACT_ADRESS
 
-export const initializeContract = async (provider: ethers.providers.Web3provider) => {
+const provider = new BrowserProvider(window.ethereum);
+
+export const initializeContract = async (provider: BrowserProvider(window.ethereum)) => {
   const signer = provider.getSigner();
   return new ethers.Contract(CONTRACT_ADRESS!, contractABI, signer);
 }

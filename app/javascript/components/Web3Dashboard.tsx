@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ethers } from "ethers";
+import { ethers, BrowserProvider } from "ethers";
 import contractABI from "../contractABI.json"; // Adjust path as needed
 
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS; // Assuming this is in your .env
@@ -20,9 +20,9 @@ const Web3Dashboard: React.FC = () => {
       return;
     }
 
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const provider = new BrowserProvider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
-    const signer = provider.getSigner();
+    const signer = await provider.getSigner();
     const address = await signer.getAddress();
     setWalletAddress(address);
 
