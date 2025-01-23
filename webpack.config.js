@@ -2,26 +2,25 @@ const path = require('path');
 const Dotenv = require('dotenv-webpack');
 
 module.exports = {
-  entry: './src/index.tsx', // Adjust entry point if different
+  mode: 'development',
+  entry: './app/javascript/application.tsx',
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js',
+    path: path.resolve(__dirname, 'public/packs'),
+    filename: 'application.js',
+  },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
   },
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
+        test: /\.(ts|tsx)$/,
         use: 'ts-loader',
         exclude: /node_modules/,
       },
     ],
   },
-  resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
-  },
   plugins: [
-    new Dotenv({
-      path: './.env', // Path to your .env file
-    }),
+    new Dotenv(), // Add this plugin
   ],
 };
