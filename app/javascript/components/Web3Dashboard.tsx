@@ -2,20 +2,15 @@ import React, { useState, useEffect  } from "react";
 import { ethers, BrowserProvider } from "ethers";
 const CONTRACT_ABI = require("../contractABI.json"); // Adjust path as needed
 
-console.log("Contract ABI:", CONTRACT_ABI);
+const CONTRACT_ADDRESS = process.env.DEPLOYED_CONTRACT_ADDRESS; // Assuming this is in your .env
 
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS; // Assuming this is in your .env
+interface Web3DashboardProps {
+  contractAddress: string;
+}
 
-const Web3Dashboard: React.FC = () => {
+const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [gameCounter, setGameCounter] = useState<string | null>(null);
-  console.log("React is mounting...");
-
-  useEffect(() => {
-    console.log("Web3Dashboard mounted");
-    console.log("Contract Address:", CONTRACT_ADDRESS);
-    console.log("Contract ABI:", CONTRACT_ABI);
-  }, []);
 
   const connectWallet = async () => {
     console.log("Connecting wallet...");
