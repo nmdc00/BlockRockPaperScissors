@@ -155,4 +155,19 @@ contract RockPaperScissors {
     emit GameCompleted(gameId, winner, game.pot);
     game.status = GameStatus.Completed;
   }
+
+  function getPlayerCount(uint256 gameId) public view returns (uint256) {
+    Game storage game = games[gameId];
+    uint256 count = 0;
+
+    if (game.player1.addr != address(0)) {
+        count++;
+    }
+    if (game.player2.addr != address(0)) {
+        count++;
+    }
+
+    return count;
+  }
+
 }

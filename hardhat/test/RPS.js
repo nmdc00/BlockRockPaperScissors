@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { assert } = require("chai");
 require("dotenv").config();
-const DEPLOYED_CONTRACT_ADDRESS = process.env.DEPLOYED_CONTRACT_ADDRESS || "";
+const CONTRACT_ADDRESS = window.ENV?.CONTRACT_ADDRESS || "";
 
 describe("RockPaperScissors Contract", function () {
   let contract;
@@ -53,8 +53,8 @@ describe("RockPaperScissors Contract", function () {
   });
 
   it("should allow the owner to create a game", async function () {
-    if (DEPLOYED_CONTRACT_ADDRESS) {
-      console.log("Using pre-deployed contract at:", DEPLOYED_CONTRACT_ADDRESS);
+    if (CONTRACT_ADDRESS) {
+      console.log("Using pre-deployed contract at:", CONTRACT_ADDRESS);
       return expect(true).to.be.true; // Return success immediately
     } 
     // Owner creates a game
