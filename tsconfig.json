@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "target": "ESNext",
+    "lib": ["DOM", "ESNext"]
+  },
+  "include": ["app/javascript/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -36,9 +36,6 @@ contract RockPaperScissors {
   event MovesCommitted(uint256 indexed gameId, address indexed player);
   event MoveRevealed(uint256 indexed gameId, address indexed player, Move move);
   event GameCompleted(uint256 indexed gameId, address indexed winner, uint256 pot);
-  event DebugHash(bytes32 expected, bytes32 actual);
-  event DebugInput(uint8 move, string message);
-
 
   // Owner restriction modifier
   modifier onlyOwner() {
@@ -96,7 +93,6 @@ contract RockPaperScissors {
     Game storage game = games[gameId];
 
     require(game.status == GameStatus.MovesCommitted, "Game is not in reveal phase");
-    emit DebugInput(uint8(move), "Game phase validated");
 
     require(move != Move.None, "Invalid move");
 
@@ -104,15 +100,12 @@ contract RockPaperScissors {
       msg.sender == game.player1.addr || msg.sender == game.player2.addr,
       "Only game participants can reveal moves"
     );
-     emit DebugInput(uint8(move), "Participant check passed");
 
     // Identify the player and ensure they haven't already revealed their move
     Player storage player = msg.sender == game.player1.addr ? game.player1 : game.player2;
     require(player.revealedMove == Move.None, "Move already revealed");
-    emit DebugInput(uint8(move), "Revealed move check passed");
 
     bytes32 expectedHash = keccak256(abi.encode(move, secret));
-    emit DebugInput(uint8(move), "Hash check passed");
 
     require(
     expectedHash == player.hashedMove,
@@ -126,9 +119,6 @@ contract RockPaperScissors {
 
     // If checks pass, update the revealed move
     player.revealedMove = move;
-
-    // Debugging output
-    emit DebugInput(uint8(move), "Revealed move updated");
 
     emit MoveRevealed(gameId, msg.sender, move);
 
@@ -165,4 +155,19 @@ contract RockPaperScissors {
     emit GameCompleted(gameId, winner, game.pot);
     game.status = GameStatus.Completed;
   }
+
+  function getPlayerCount(uint256 gameId) public view returns (uint256) {
+    Game storage game = games[gameId];
+    uint256 count = 0;
+
+    if (game.player1.addr != address(0)) {
+        count++;
+    }
+    if (game.player2.addr != address(0)) {
+        count++;
+    }
+
+    return count;
+  }
+
 }

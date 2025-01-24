@@ -8,9 +8,16 @@
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+
   </head>
 
   <body>
-    <%= yield %>
+    <div id="react-root" data-react-component="Web3Dashboard" data-contract-address="<%= ENV['DEPLOYED_CONTRACT_ADDRESS'] %>"></div>
   </body>
+
+  <script src="/packs/application.js" defer></script>
+  <script id="data-contract-address">window.ENV = {
+    DEPLOYED_CONTRACT_ADDRESS: "<%= ENV['DEPLOYED_CONTRACT_ADDRESS'] %>"
+  };
+  </script>
 </html>
