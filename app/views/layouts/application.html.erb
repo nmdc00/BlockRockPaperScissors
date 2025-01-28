@@ -12,12 +12,14 @@
   </head>
 
   <body>
-    <div id="react-root" data-react-component="Web3Dashboard" data-contract-address="<%= ENV['DEPLOYED_CONTRACT_ADDRESS'] %>"></div>
+    <div id="react-root" data-react-component="Web3Dashboard" data-contract-address="<%= ENV['CONTRACT_ADDRESS'] %>"></div>
   </body>
 
   <script src="/packs/application.js" defer></script>
-  <script id="data-contract-address">window.ENV = {
-    DEPLOYED_CONTRACT_ADDRESS: "<%= ENV['DEPLOYED_CONTRACT_ADDRESS'] %>"
-  };
+  <script id="data-contract-address">
+    window.ENV = {
+      CONTRACT_ADDRESS: "<%= ENV['CONTRACT_ADDRESS'] %>"
+    };
+    console.log("Contract Address from application.html.erb:", window.ENV.CONTRACT_ADDRESS);
   </script>
 </html>
