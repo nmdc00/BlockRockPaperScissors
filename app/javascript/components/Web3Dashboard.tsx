@@ -1,81 +1,77 @@
 import React, { useState, useEffect } from "react";
-import { connectWallet } from "./wallet";
-import { getPlayerCount, joinGame, listenForGameReady } from "./contractService";
+import { connectWallet, disconnectWallet } from "./wallet";
+import { joinGame } from "./contractService";
 import { ethers } from "ethers";
 
-// Define the props interface
 interface Web3DashboardProps {
   contractAddress: string;
 }
 
 const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
-  const [isGameReady, setIsGameReady] = useState(false);
-  const [playerCount, setPlayerCount] = useState(0);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [gameId, setGameId] = useState<number>(1);
-  
-  // Join the game
-  const handleJoinGame = async () => {
-    try {
-      const signer = await connectWallet();
-      if (!signer) return;
-
-      await joinGame(signer);
-      alert("Successfully joined the game!");
-    } catch (error) {
-      console.error("Error joining the game:", error);
-      alert("Failed to join the game. Check the console for details.");
-    }
-  };
-
-  // Fetch the player count
-  const fetchPlayerCount = async () => {
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const count = await getPlayerCount(provider, gameId);
-      setPlayerCount(count);
-      console.log("Player count (type):", typeof count, count);
-    } catch (error) {
-      console.error("Error fetching player count:", error);
-    }
-  };
+  const [statusMessage, setStatusMessage] = useState<string>("");
 
   useEffect(() => {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-
-    // Listen for the GameReady event
-    listenForGameReady(provider, (player1, player2) => {
-      console.log("Game is ready! Players:", player1, player2);
-      setIsGameReady(true);
-      alert(`Game is ready! Player 1: ${player1}, Player 2: ${player2}`);
-    });
-
-    // Fetch player count on mount
-    fetchPlayerCount();
-
-    return () => {
-      // Clean up event listeners when the component unmounts
-      provider.removeAllListeners();
-    };
+    setWalletAddress(null); // Ensure it resets on refresh
   }, []);
+
+  const handleConnectWallet = async () => {
+    const signer = await connectWallet();
+    if (signer) {
+      setWalletAddress(await signer.getAddress());
+    }
+  };
+
+  const handleJoinGame = async () => {
+    if (!walletAddress) {
+      setStatusMessage("Please connect your wallet first.");
+      return;
+    }
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      await joinGame(gameId, signer);
+      setStatusMessage(`Joined game #${gameId} successfully!`);
+    } catch (error) {
+      console.error("Error joining the game:", error);
+      setStatusMessage("Failed to join the game.");
+    }
+  };
 
   return (
     <div>
       <h1>Rock Paper Scissors - Web3 Edition</h1>
+      
+      {walletAddress ? (
+        <>
+          <p>Wallet Connected: {walletAddress}</p>
+          <button onClick={disconnectWallet}>Disconnect</button>
+        </>
+      ) : (
+        <button onClick={handleConnectWallet}>Connect Wallet</button>
+      )}
 
-      {!isGameReady ? (
+      {/* Only show this section if wallet is connected */}
+      {walletAddress && (
         <div>
-          <p>Player Count: {playerCount}/2</p>
+          <label htmlFor="gameId">Game ID:</label>
+          <input
+            type="number"
+            id="gameId"
+            value={gameId}
+            onChange={(e) => setGameId(Number(e.target.value))}
+            min={1}
+          />
           <button onClick={handleJoinGame}>Join Game</button>
         </div>
-      ) : (
-        <div>
-          <h2>The game is ready!</h2>
-          <p>Now you can make your moves!</p>
-          {/* Add move submission buttons here */}
-        </div>
       )}
+
+      {statusMessage && <p>{statusMessage}</p>}
     </div>
   );
 };
 
-export default Web3Dashboard;
+export default Web3Dashboard; // ✅ Ensure this export is present!

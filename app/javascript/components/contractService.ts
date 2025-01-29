@@ -1,9 +1,9 @@
 import { ethers, BrowserProvider, Contract } from "ethers";
-const contractABI  = require("../contractABI.json"); // Adjust path as needed
+const contractABI = require("../contractABI.json"); // Adjust path as needed
 
-const CONTRACT_ADDRESS = window.ENV?.CONTRACT_ADDRESS
+const CONTRACT_ADDRESS = window.ENV?.CONTRACT_ADDRESS;
 
-//Get the contract
+// Helper to get the contract instance
 export const getContract = (
   signerOrProvider: ethers.Signer | ethers.Provider
 ): Contract => {
@@ -11,44 +11,25 @@ export const getContract = (
     throw new Error("Contract address is not defined!");
   }
 
-  return new ethers.Contract(CONTRACT_ADDRESS, contractABI.abi , signerOrProvider);
+  return new ethers.Contract(CONTRACT_ADDRESS, contractABI, signerOrProvider);
 };
 
-// Join the Game
-export const joinGame = async (signer: ethers.Signer): Promise<void> => {
-  const contract = getContract(signer);
-  const tx = await contract.joinGame();
-  await tx.wait();
-};
-
-// Get the number of players
-export const getPlayerCount = async (
-  provider: ethers.Provider,
-  gameId: number
-): Promise<number> => {
-  if (!CONTRACT_ADDRESS) {
-    throw new Error("Contract address is not defined!");
-  }
-
-  const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI.abi, provider);
+export const joinGame = async (gameId: number, signer: ethers.Signer): Promise<void> => {
 
   try {
-    const count = await contract.getPlayerCount(gameId);
-    console.log(`Player count for game ${gameId}:`, count);
-    return count.toNumber(); // Convert BigNumber to number
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = getContract(signer);
+
+    const tx = await contract.joinGame(gameId, {
+    });
+
+    await tx.wait();
+
+    console.log(`Successfully joined game #${gameId}`);
+
   } catch (error) {
-    console.error("Error fetching player count:", error);
+    console.error("Error joining the game:", error);
     throw error;
   }
-};
-
-// Listen for the "GameReady" event
-export const listenForGameReady = (
-  provider: ethers.Provider,
-  callback: (player1: string, player2: string) => void
-): void => {
-  const contract = getContract(provider);
-  contract.on("GameReady", (player1, player2) => {
-    callback(player1, player2);
-  });
 };

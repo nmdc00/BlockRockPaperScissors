@@ -40,3 +40,8 @@ node_modules
 !/app/assets/builds/.keep
 
 /node_modules
+
+hardhat/.env
+/public/packs/application.js
+/public/packs/application.js.LICENSE.txt
+/public/packs/application.js.LICENSE.txt
