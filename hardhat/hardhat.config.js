@@ -6,12 +6,10 @@ require("dotenv").config(); // Load environment variables from .env
 const INFURA_API_KEY = process.env.INFURA_API_KEY || "";
 const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY || "";
 
-console.log("INFURA_API_KEY:", process.env.INFURA_API_KEY);
-console.log("SEPOLIA_PRIVATE_KEY:", process.env.SEPOLIA_PRIVATE_KEY);
-
-if (!INFURA_API_KEY || !SEPOLIA_PRIVATE_KEY) {
-  throw new Error("Please set INFURA_API_KEY and SEPOLIA_PRIVATE_KEY in your .env file");
+if (!process.env.INFURA_API_KEY || !process.env.SEPOLIA_PRIVATE_KEY) {
+  console.warn("⚠️ Missing .env file or required variables. Ensure INFURA_API_KEY and SEPOLIA_PRIVATE_KEY are set.");
 }
+
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.20", // Set the Solidity version to match your contracts

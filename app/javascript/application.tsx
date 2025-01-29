@@ -6,13 +6,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const rootElement = document.getElementById("react-root");
 
   if (rootElement) {
-    const contractAddress = window.ENV?.DEPLOYED_CONTRACT_ADDRESS || "No contract address provided";
+    const contractAddress = window.ENV?.CONTRACT_ADDRESS || "No contract address provided";
 
-    console.log("Contract Address:", contractAddress);
+    console.log("Contract Address in react:", contractAddress);
 
     const root = ReactDOM.createRoot(rootElement);
     root.render(<Web3Dashboard contractAddress={contractAddress} />);
   } else {
     console.error("No React component to mount.");
   }
-})
+});
