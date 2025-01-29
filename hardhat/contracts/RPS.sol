@@ -66,7 +66,7 @@ contract RockPaperScissors {
   function joinGame(uint256 gameId) external {
     Game storage game = games[gameId];
 
-    require(game.status == GameStatus.WaitingForPlayers, "Game is not waiting for players");
+    require(game.status == GameStatus.WaitingForPlayers, "");
 
     // address(0) can be used to verify whether an address has been properly initialized or assigned. 
     // If a variable holds the value address(0) it indicates that the address has not been set or is invalid, enabling smart contracts to handle such cases accordingly.
