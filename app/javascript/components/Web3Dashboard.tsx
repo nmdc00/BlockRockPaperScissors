@@ -91,7 +91,7 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
 
   return (
     <div>
-      <h1>Rock Paper Scissors - Web3 Edition</h1>
+      <h1>Block Paper Scissors</h1>
   
       {walletAddress ? (
         <>

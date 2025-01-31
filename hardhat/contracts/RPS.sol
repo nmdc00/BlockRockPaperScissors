@@ -30,6 +30,9 @@ contract RockPaperScissors {
   mapping(uint256 => Game) public games;
   uint256 public gameCounter;
 
+  //Tracking if player is already in a game
+  mapping(address => uint256) public activeGame; // Track active game per player
+  
   // Logs for key actions like game creation, second player joining, revealing the moves
   event GameCreated(uint256 indexed gameId, uint256 betAmount);
   // event PlayerJoined(uint256 indexed gameId, address indexed player);
@@ -37,6 +40,7 @@ contract RockPaperScissors {
   event MovesCommitted(uint256 indexed gameId, address indexed player);
   event MoveRevealed(uint256 indexed gameId, address indexed player, Move move);
   event GameCompleted(uint256 indexed gameId, address indexed winner, uint256 pot);
+  event PlayerLeft(uint256 indexed gameId, address indexed player);
 
   // Owner restriction modifier
   modifier onlyOwner() {
@@ -64,20 +68,24 @@ contract RockPaperScissors {
   }
 
   function joinGame(uint256 gameId) external {
+    require(gameId > 0, "Invalid gameID");
+    require(activeGame[msg.sender] == 0, "You are already in a game!");
+
     Game storage game = games[gameId];
-
     require(game.status == GameStatus.WaitingForPlayers, "");
-
+    
     // address(0) can be used to verify whether an address has been properly initialized or assigned. 
     // If a variable holds the value address(0) it indicates that the address has not been set or is invalid, enabling smart contracts to handle such cases accordingly.
     if (game.player1.addr == address(0)) {
       game.player1 = Player(payable(msg.sender), bytes32(0), Move.None, block.timestamp);
+      activeGame[msg.sender] = gameId; // Store active game
       emit PlayerJoined(gameId, msg.sender); // Emit hashedMove for debugging
     } else if (game.player2.addr == address(0)) {
       require(msg.sender != game.player1.addr, "Player1 cannot join again");
 
       game.player2 = Player(payable(msg.sender), bytes32(0), Move.None, block.timestamp);
       game.status = GameStatus.MovesCommitted;
+      activeGame[msg.sender] = gameId; // Store active game
       emit PlayerJoined(gameId, msg.sender);
     } else {
       revert("Game already has two players");
@@ -86,6 +94,31 @@ contract RockPaperScissors {
     // emit PlayerJoined(gameId, msg.sender);
   }
 
+  function leaveGame(uint256 gameId) external {
+    Game storage game = games[gameId];
+
+    require(
+      msg.sender == game.player1.addr || msg.sender == game.player2.addr, 
+      "You are not part of this game"
+    );
+
+    //Can only leave if both players havent r
+    //Player1 leaving
+    if (msg.sender == game.player1.addr) {
+      game.player1 = Player(payable(address(0)), bytes32(0), Move.None, 0);
+    }
+
+    if (msg.sender == game.player2.addr) {
+      game.player2 = Player(payable(address(0)), bytes32(0), Move.None, 0);
+    }
+
+    // Reset game status if no players are left
+    if (game.player1.addr == address(0) && game.player2.addr == address(0)) {
+        game.status = GameStatus.WaitingForPlayers;
+    }
+
+    emit PlayerLeft(gameId, msg.sender);
+  }
   function commitMove(uint256 gameId, bytes32 hashedMove) external {
     Game storage game = games[gameId];
     require(game.status == GameStatus.MovesCommitted, "Game is not accepting moves");
