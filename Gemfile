@@ -72,3 +72,5 @@ group :test do
 end
 
 gem "web3", "~> 0.4.1"
+gem 'faraday'
+gem 'json'

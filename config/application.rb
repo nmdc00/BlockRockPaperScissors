@@ -25,3 +25,9 @@ module RpsDapp
     # config.eager_load_paths << Rails.root.join("extras")
   end
 end
+
+module BlockRockPaperScissors
+  class Application < Rails::Application
+    config.eager_load_paths << Rails.root.join('lib')
+  end
+end

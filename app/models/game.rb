@@ -1,5 +1,7 @@
 class Game < ApplicationRecord
+    validates :game_id, presence: true, uniqueness: true
     validates :bet_amount, presence: true, numericality: { greater_than: 0}
+    validates :player1_address, presence: true, uniqueness: true 
     validates :player1_move, inclusion: { in: %w[Rock Paper Scissors], allow_nil: true }
     validates :player2_move, inclusion: { in: %w[Rock Paper Scissors], allow_nil: true }
 

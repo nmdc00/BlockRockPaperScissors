@@ -20,6 +20,7 @@ class GamesController < ApplicationController
 
 		def join 
 			@game = Game.find(params[:id])
+			byebug
 			if @game.player.nil?
 				@game.update(player1: params[:player_address])
 			elsif @game.player2.nil?

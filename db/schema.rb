@@ -12,16 +12,17 @@
 
 ActiveRecord::Schema[7.1].define(version: 2025_01_07_144142) do
   create_table "games", force: :cascade do |t|
-    t.string "player1"
-    t.string "player2"
+    t.bigint "game_id", null: false
+    t.string "player1_address", null: false
+    t.string "player2_address"
     t.string "player1_move"
     t.string "player2_move"
     t.string "winner"
-    t.string "status"
-    t.decimal "bet_amount"
-    t.decimal "pot_amount"
+    t.string "status", default: "waiting"
+    t.decimal "pot_amount", precision: 18, scale: 8
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_games_on_game_id", unique: true
   end
 
 end
