@@ -4,7 +4,7 @@ const { artifacts } = require("hardhat");
 
 async function main() {
   const artifact = await artifacts.readArtifact("RockPaperScissors");
-  const abiPath = path.resolve(__dirname, "/home/nuno/rps_dapp/app/javascript/contractABI.json");
+  const abiPath = path.resolve(__dirname, "/home/nuno/projects/BlockRockPaperScissors/hardhat/contractABI.json");
 
   fs.writeFileSync(abiPath, JSON.stringify(artifact.abi, null, 2));
   console.log(`ABI saved to ${abiPath}`);
