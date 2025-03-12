@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { connectWallet, disconnectWallet } from "./wallet";
-import { hasPlayerJoined, joinGame, getPlayerCount} from "./contractService";
+import { hasPlayerJoined, joinGame, getPlayerCount, commitMove, revealMove} from "./contractService";
 import { ethers } from "ethers";
 
 interface Web3DashboardProps {
@@ -13,11 +13,14 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [hasJoined, setHasJoined] = useState(false);
   const [playerCount, setPlayerCount] = useState(0);
+  const [secret, setSecret] = useState<string>('');
+  const [move, setMove] = useState<number>(1);
+  const [betAmount, setBetAmount] = useState<string>("0.01");
 
   useEffect(() => {
     setWalletAddress(null); // Ensure it resets on refresh
   }, []);
-
+  
   const handleConnectWallet = async () => {
     const signer = await connectWallet();
     if (signer) {
@@ -26,14 +29,14 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   };
 
   const handleJoinGame = async () => {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
     if (!walletAddress) {
       setStatusMessage("Please connect your wallet first.");
       return;
     }
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
       // Fetch player count after joining
       const count = await getPlayerCount(provider, gameId);
       if (count >= 2) {
@@ -52,11 +55,37 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     }
   };
 
+  const handleCommitMove = async () => {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    if (!signer) return setStatusMessage("Connect wallet first!")
+    try {
+      const txHash = await commitMove(gameId, move, secret, betAmount, signer);
+      setStatusMessage('Move commited. Tx: ${txHash}');
+    } catch (error) {
+      console.log(error);
+      setStatusMessage("Failed to commit move.");
+    }
+  };
+
+  const handleRevealMove = async () => {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    if (!signer) return setStatusMessage("Connect wallet first!")
+    try {
+      const txHash = await revealMove(gameId, move, secret, signer);
+      setStatusMessage('Move revealed. Tx: ${txHash}');
+    } catch (error) {
+      console.log(error);
+      setStatusMessage("Failed to reveal move.");
+    }
+  };
+
   //Fetch player count when gameID changes
   useEffect(() => {
     const fetchPlayerCount = async () => {
+      const provider = new ethers.BrowserProvider(window.ethereum);
       try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
         const count = await getPlayerCount(provider, gameId);
         setPlayerCount(count);
       } catch (error) {
@@ -73,10 +102,9 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   useEffect(() => {
     const checkIfPlayerJoined = async () => {
       try {
-        if (!walletAddress) return;
-
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
+        if (!walletAddress) return;
         const address = await signer.getAddress();
 
         const isJoined = await hasPlayerJoined(provider, gameId, address);
@@ -89,7 +117,7 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     checkIfPlayerJoined();
   }, [gameId, walletAddress]); // Runs when `gameId` or `walletAddress` changes
 
-  return (
+   return (
     <div>
       <h1>Block Paper Scissors</h1>
   

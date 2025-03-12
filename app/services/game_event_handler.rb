@@ -15,4 +15,15 @@ class GameEventHandler
     else
       Rails.logger.warn "Player already in game or duplicate: #{player_address} for game #{game_id}"
     end
+
+    def self.handle_game_completed(game_id, winner, pot)
+      game = Game.find_by(game_id: game_id)
+      return unless game
+      
+      game.winner = winner
+      game.pot = pot
+      game.status = 'completed'
+      game.save!
+
+      puts "Game #{game_id} completed. Winner: #{winner}, Pot: #{pot} ETH"
 end

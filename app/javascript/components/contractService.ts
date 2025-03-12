@@ -60,3 +60,44 @@ export const getPlayerCount = async (
     throw error;
   }
 }
+
+export const commitMove = async (
+  gameId: number,
+  move: number,
+  secret: string,
+  betAmount: string,
+  signer: ethers.Signer
+) => {
+  const contract = getContract(signer)
+
+  const hashedMove = ethers.keccak256(
+    ethers.AbiCoder.defaultAbiCoder().encode(
+      ["unit8", "string"],
+      [move, secret]
+    )
+  );
+  
+  const tx = await contract.commitMove(gameId, hashedMove, {
+    value: ethers.parseEther(betAmount)
+  });
+
+  await tx.wait();
+
+  console.log("Move commited successfully")
+
+  return tx.hash;
+};
+
+export const revealMove = async (
+  gameId: number,
+  move: number,
+  secret: string,
+  signer: ethers.Signer
+) => {
+  const contract = getContract(signer);
+
+  const tx = await contract.revealMove(gameId, move, secret);
+  await tx.wait()
+  console.log("Move revealed successfully");
+  return tx.hash
+};
