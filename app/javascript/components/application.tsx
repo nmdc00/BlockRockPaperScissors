@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import Web3Dashboard from "./components/Web3Dashboard"; // Adjust path if necessary
+
+import Web3Dashboard from "./Web3Dashboard";
 
 document.addEventListener("DOMContentLoaded", () => {
   const rootElement = document.getElementById("react-root");

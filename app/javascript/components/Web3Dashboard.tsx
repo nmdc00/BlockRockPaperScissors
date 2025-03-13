@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { connectWallet, disconnectWallet } from "./wallet";
 import { hasPlayerJoined, joinGame, getPlayerCount, commitMove, revealMove} from "./contractService";
 import { ethers } from "ethers";
-import styles from './Web3Dashboard.module.css';
+import styles from '../components/Web3Dashboard.module.css';
 
 interface Web3DashboardProps {
   contractAddress: string;
@@ -119,21 +119,26 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   }, [gameId, walletAddress]); // Runs when `gameId` or `walletAddress` changes
 
    return (
-    <div className={styles.container}>
-      <h1>Block Paper Scissors</h1>
-  
+    <div className={styles.wrapper}>
+      <h1 className={styles.title}>Block Paper Scissors</h1>
+
+      {/* Wallet */}
       {walletAddress ? (
-        <>
+        <div className={styles.walletSection}>
           <p>Wallet Connected: {walletAddress}</p>
-          <button onClick={disconnectWallet}>Disconnect</button>
-        </>
+          <button className={styles.button} onClick={disconnectWallet}>
+            Disconnect
+          </button>
+        </div>
       ) : (
-        <button onClick={handleConnectWallet}>Connect Wallet</button>
+        <button className={styles.button} onClick={handleConnectWallet}>
+          Connect Wallet
+        </button>
       )}
   
-      {/* Only show this section if the wallet is connected */}
+      {/* Game Logic */} {/* Only show this section if the wallet is connected */} 
       {walletAddress && (
-        <div>
+        <div className={styles.gameSection}>
           <label htmlFor="gameId">Game ID:</label>
           <input
             type="number"
@@ -141,10 +146,22 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
             value={gameId}
             onChange={(e) => setGameId(Number(e.target.value))}
             min={1}
+            className={styles.input}
+          />
+
+          <label htmlFor="betAmount">Bet Amount (ETH):</label>
+          <input
+            type="text"
+            id="betAmount"
+            value={betAmount}
+            onChange={(e) => setBetAmount(e.target.value)}
+            className={styles.input}
           />
           
           {!hasJoined ? (
-            <button onClick={handleJoinGame}>Join Game</button>
+            <button className={styles.button} onClick={handleJoinGame}>
+              Join Game
+            </button>
           ) : playerCount === 1 ? (
             <p>Waiting for another player to join...</p>
           ) : (

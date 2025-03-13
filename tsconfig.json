@@ -7,7 +7,12 @@
     "resolveJsonModule": true,
     "target": "ESNext",
     "lib": ["DOM", "ESNext"]
+    
   },
-  "include": ["app/javascript/**/*"],
+  "include": [
+    "app/javascript/**/*.ts",
+    "app/javascript/**/*.tsx",
+    "app/javascript/**/*.d.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }
