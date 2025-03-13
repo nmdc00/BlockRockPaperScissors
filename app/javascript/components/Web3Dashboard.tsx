@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { connectWallet, disconnectWallet } from "./wallet";
 import { hasPlayerJoined, joinGame, getPlayerCount, commitMove, revealMove} from "./contractService";
 import { ethers } from "ethers";
+import styles from './Web3Dashboard.module.css';
 
 interface Web3DashboardProps {
   contractAddress: string;
@@ -118,7 +119,7 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   }, [gameId, walletAddress]); // Runs when `gameId` or `walletAddress` changes
 
    return (
-    <div>
+    <div className={styles.container}>
       <h1>Block Paper Scissors</h1>
   
       {walletAddress ? (

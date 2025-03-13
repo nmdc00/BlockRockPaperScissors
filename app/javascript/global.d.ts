@@ -9,4 +9,10 @@ declare global {
   }
 }
 
+// global.d.ts
+declare module '*.Web3Dashboard.module' {
+  const classes: { [key: string]: string };
+  export default classes;
+}
+
 export {};
