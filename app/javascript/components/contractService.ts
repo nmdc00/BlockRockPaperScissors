@@ -65,27 +65,14 @@ export const commitMove = async (
   gameId: number,
   move: number,
   secret: string,
-  betAmount: string,
   signer: ethers.Signer
-) => {
+): Promise<void> => {
   const contract = getContract(signer)
 
-  const hashedMove = ethers.keccak256(
-    ethers.AbiCoder.defaultAbiCoder().encode(
-      ["unit8", "string"],
-      [move, secret]
-    )
-  );
-  
-  const tx = await contract.commitMove(gameId, hashedMove, {
-    value: ethers.parseEther(betAmount)
-  });
-
+  const hash = ethers.keccak256(ethers.toUtf8Bytes(move.toString() + secret));
+  const tx = await contract.commitMove(gameId, hash);
   await tx.wait();
-
   console.log("Move commited successfully")
-
-  return tx.hash;
 };
 
 export const revealMove = async (

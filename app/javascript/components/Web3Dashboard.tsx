@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { connectWallet, disconnectWallet } from "./wallet";
 import { hasPlayerJoined, joinGame, getPlayerCount, commitMove, revealMove, leaveGame} from "./contractService";
-import { ethers } from "ethers";
+import { ethers, keccak256, toUtf8Bytes } from "ethers";
 import styles from '../components/Web3Dashboard.module.css';
 
 interface Web3DashboardProps {
@@ -16,6 +16,7 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   const [playerCount, setPlayerCount] = useState(0);
   const [secret, setSecret] = useState<string>('');
   const [move, setMove] = useState<number>(1);
+  const [commitHash, setCommitHash] = useState<string>("");
   const [betAmount, setBetAmount] = useState<string>("0.01");
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const [isPlayer1, setIsPlayer1] = useState<boolean>(false);
@@ -67,16 +68,35 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
       setStatusMessage(`Failed to join the game with Id#${gameId}.`);
     }
   };
+  
+  const handleMoveSelection = (selectedMove: number) => {
+    const generatedSecret = crypto.randomUUID();
+    setMove(selectedMove);
+    setSecret(generatedSecret);
+
+    const hash = keccak256(
+      toUtf8Bytes(selectedMove.toString() + generatedSecret)
+    );
+    setCommitHash(hash);
+
+    console.log("Generated Secret:", generatedSecret)
+    console.log("Commitment Hash:", hash);
+  };
 
   const handleCommitMove = async () => {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    if (!signer) return setStatusMessage("Connect wallet first!")
     try {
-      const txHash = await commitMove(gameId, move, secret, betAmount, signer);
-      setStatusMessage('Move commited. Tx: ${txHash}');
-    } catch (error) {
-      console.log(error);
+      if (!move || !secret) {
+        setStatusMessage("Please select a move.");
+        return;
+      }
+  
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const signer = await provider.getSigner();
+  
+      await commitMove(gameId, move, secret, signer);
+      setStatusMessage("Move committed successfully!");
+    } catch (error: any) {
+      console.error("Error committing move:", error);
       setStatusMessage("Failed to commit move.");
     }
   };
@@ -95,6 +115,8 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   };
 
   const handleLeaveGame = async () => {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
     if (!walletAddress) return;
     try {
       await leaveGame(provider, gameId);
@@ -142,25 +164,21 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     checkIfPlayerJoined();
   }, [gameId, walletAddress]); // Runs when `gameId` or `walletAddress` changes
 
-   return (
+  return (
     <div className={styles.wrapper}>
       <h1 className={styles.title}>Block Paper Scissors</h1>
 
-      {/* Wallet */}
+      {/* Wallet Section */}
       {walletAddress ? (
         <div className={styles.walletSection}>
           <p>Wallet Connected: {walletAddress}</p>
-          <button className={styles.button} onClick={disconnectWallet}>
-            Disconnect
-          </button>
+          <button className={styles.button} onClick={disconnectWallet}>Disconnect</button>
         </div>
       ) : (
-        <button className={styles.button} onClick={handleConnectWallet}>
-          Connect Wallet
-        </button>
+        <button className={styles.button} onClick={handleConnectWallet}>Connect Wallet</button>
       )}
-  
-      {/* Game Logic */} {/* Only show this section if the wallet is connected */} 
+
+      {/* Game Section */}
       {walletAddress && (
         <div className={styles.gameSection}>
           <label htmlFor="gameId">Game ID:</label>
@@ -173,30 +191,59 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
             className={styles.input}
           />
 
-          <label htmlFor="betAmount">Bet Amount (ETH):</label>
-          <input
-            type="text"
-            id="betAmount"
-            value={betAmount}
-            onChange={(e) => setBetAmount(e.target.value)}
-            className={styles.input}
-          />
-          
+          {/* Only first player sets bet */}
+          {!hasJoined && playerCount === 0 && (
+            <>
+              <label htmlFor="betAmount">Bet Amount (ETH):</label>
+              <input
+                type="text"
+                id="betAmount"
+                value={betAmount}
+                onChange={(e) => setBetAmount(e.target.value)}
+                className={styles.input}
+              />
+            </>
+          )}
+
+          {/* Join or waiting */}
           {!hasJoined ? (
-            <button className={styles.button} onClick={handleJoinGame}>
-              Join Game
-            </button>
+            <button className={styles.button} onClick={handleJoinGame}>Join Game</button>
           ) : playerCount === 1 ? (
             <p>Waiting for another player to join...</p>
           ) : (
-            <p>Game is ready! You can now make your move.</p>
+            <>
+              <p>Game is ready! You can now make your move.</p>
+              <div className={styles.commitSection}>
+                <label htmlFor="move">Select Move:</label>
+                <select
+                  id="move"
+                  value={move}
+                  onChange={(e) => setMove(Number(e.target.value))}
+                  className={styles.input}
+                >
+                  <option value={0}>Select</option>
+                  <option value={1}>Rock</option>
+                  <option value={2}>Paper</option>
+                  <option value={3}>Scissors</option>
+                </select>
+
+                {secret && <p>Your secret (keep this safe for reveal): {secret}</p>}
+
+                <button className={styles.button} onClick={handleCommitMove}>Commit Move</button>
+              </div>
+            </>
           )}
-  
-          {statusMessage && <p>{statusMessage}</p>}
+
+          {/* Leave Game Option */}
+          {hasJoined && (
+            <button className={styles.leaveButton} onClick={handleLeaveGame}>Leave Game</button>
+          )}
+
+          {statusMessage && <p className={styles.statusMessage}>{statusMessage}</p>}
         </div>
       )}
     </div>
   );
-}
+};
 
 export default Web3Dashboard;
