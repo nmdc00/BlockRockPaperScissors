@@ -41,6 +41,9 @@ node_modules
 /node_modules
 
 hardhat/.env
+hardhat/artifacts/*
+hardhat/ignition/*
+
 /public/packs/application.js
 /public/packs/application.js.LICENSE.txt
 /public/packs/application.js.LICENSE.txt

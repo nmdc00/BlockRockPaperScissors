@@ -1,0 +1,2 @@
+ npx hardhat ignition deploy ignition/modules/RPS.js --network sepolia --reset
+ npx hardhat run scripts/exportABI.js
