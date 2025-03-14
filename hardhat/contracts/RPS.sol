@@ -70,7 +70,7 @@ contract RockPaperScissors {
     return gameCounter;
   }
 
-  function joinGame(uint256 gameId) external {
+  function joinGame(uint256 gameId) external payable {
     require(gameId > 0, "Invalid gameID");
     require(activeGame[msg.sender] == 0, "You are already in a game!");
 
@@ -88,6 +88,7 @@ contract RockPaperScissors {
 
       game.player2 = Player(payable(msg.sender), bytes32(0), Move.None, block.timestamp);
       game.status = GameStatus.MovesCommitted;
+      game.isActive = true;
       activeGame[msg.sender] = gameId; // Store active game
       emit PlayerJoined(gameId, msg.sender);
     } else {
@@ -196,6 +197,7 @@ contract RockPaperScissors {
     
     emit GameCompleted(gameId, winner, game.pot);
     game.status = GameStatus.Completed;
+    game.isActive = false;
   }
 
   function getPlayerCount(uint256 gameId) public view returns (uint256) {

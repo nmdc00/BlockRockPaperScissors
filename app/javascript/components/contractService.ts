@@ -1,5 +1,5 @@
 import { ethers, BrowserProvider, Contract } from "ethers";
-const contractABI = require("../contractABI.json"); // Adjust path as needed
+const contractABI = require("/home/nuno/projects/BlockRockPaperScissors/hardhat/contractABI.json"); // Adjust path as needed
 
 const CONTRACT_ADDRESS = window.ENV?.CONTRACT_ADDRESS;
 
@@ -14,12 +14,18 @@ export const getContract = (
   return new ethers.Contract(CONTRACT_ADDRESS, contractABI, signerOrProvider);
 };
 
-export const joinGame = async (gameId: number, signer: ethers.Signer): Promise<void> => {
+export const joinGame = async (
+  gameId: number, 
+  signer: ethers.Signer,
+  betAmount?: string
+): Promise<void> => {
 
   try {
     const contract = getContract(signer); // Use signer, not provider
-    const tx = await contract.joinGame(gameId);
-    await tx.wait();
+
+    const value = betAmount ? ethers.parseEther(betAmount) : ethers.parseEther("0");
+
+    const tx = await contract.joinGame(gameId, { value });
 
     await tx.wait();
 
@@ -63,16 +69,24 @@ export const getPlayerCount = async (
 
 export const commitMove = async (
   gameId: number,
-  move: number,
-  secret: string,
+  commitHash: string,
   signer: ethers.Signer
 ): Promise<void> => {
-  const contract = getContract(signer)
+  try {
+    const contract = getContract(signer);
 
-  const hash = ethers.keccak256(ethers.toUtf8Bytes(move.toString() + secret));
-  const tx = await contract.commitMove(gameId, hash);
-  await tx.wait();
-  console.log("Move commited successfully")
+    console.log("Generated commit hash:", commitHash);
+
+    // Call commitMove on the contract
+    const tx = await contract.commitMove(gameId, commitHash);
+    console.log("Transaction submitted:", tx.hash);
+
+    await tx.wait();
+    console.log("Move committed successfully on-chain!");
+  } catch (error) {
+    console.error("Failed to commit move:", error);
+    throw error; // propagate error for React to catch
+  }
 };
 
 export const revealMove = async (
