@@ -21,6 +21,9 @@ contract RockPaperScissors {
     Player player1; 
     Player player2;
     uint256 pot;
+    uint256 betAmount;
+    uint256 startTime;
+    bool isActive;  
     GameStatus status;
   }
 
@@ -101,7 +104,9 @@ contract RockPaperScissors {
       msg.sender == game.player1.addr || msg.sender == game.player2.addr, 
       "You are not part of this game"
     );
-
+    require(game.isActive, "Game not active");
+    
+    game.isActive = false;
     //Can only leave if both players havent r
     //Player1 leaving
     if (msg.sender == game.player1.addr) {
@@ -121,6 +126,9 @@ contract RockPaperScissors {
   }
   function commitMove(uint256 gameId, bytes32 hashedMove) external {
     Game storage game = games[gameId];
+
+    require(game.isActive, "Game is not active");
+    require(block.timestamp <= game.startTime + 2 minutes, "Game timed out");
     require(game.status == GameStatus.MovesCommitted, "Game is not accepting moves");
     require(
       msg.sender == game.player1.addr || msg.sender == game.player2.addr,
@@ -135,6 +143,7 @@ contract RockPaperScissors {
 
   function revealMove(uint256 gameId, Move move, string memory secret) external {
     Game storage game = games[gameId];
+
     require(game.status == GameStatus.MovesCommitted, "Game is not in reveal phase");
 
     require(

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { connectWallet, disconnectWallet } from "./wallet";
-import { hasPlayerJoined, joinGame, getPlayerCount, commitMove, revealMove} from "./contractService";
+import { hasPlayerJoined, joinGame, getPlayerCount, commitMove, revealMove, leaveGame} from "./contractService";
 import { ethers } from "ethers";
 import styles from '../components/Web3Dashboard.module.css';
 
@@ -17,11 +17,23 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   const [secret, setSecret] = useState<string>('');
   const [move, setMove] = useState<number>(1);
   const [betAmount, setBetAmount] = useState<string>("0.01");
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [isPlayer1, setIsPlayer1] = useState<boolean>(false);
 
   useEffect(() => {
     setWalletAddress(null); // Ensure it resets on refresh
   }, []);
   
+  const resetIdleTimer = () => {
+    if (timeoutId) clearTimeout(timeoutId);
+    const newTimeout = setTimeout(() => handleLeaveGame(), 2 * 60 * 1000);
+    setTimeoutId(newTimeout)
+  }
+
+  const handleUserAction = () => {
+    resetIdleTimer();
+  };
+
   const handleConnectWallet = async () => {
     const signer = await connectWallet();
     if (signer) {
@@ -79,6 +91,18 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     } catch (error) {
       console.log(error);
       setStatusMessage("Failed to reveal move.");
+    }
+  };
+
+  const handleLeaveGame = async () => {
+    if (!walletAddress) return;
+    try {
+      await leaveGame(provider, gameId);
+      setStatusMessage("You left the game.");
+      setHasJoined(false);
+      if (timeoutId) clearTimeout(timeoutId);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -174,5 +198,5 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     </div>
   );
 }
-  
+
 export default Web3Dashboard;

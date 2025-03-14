@@ -263,6 +263,21 @@
         "type": "uint256"
       },
       {
+        "internalType": "uint256",
+        "name": "betAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "startTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      },
+      {
         "internalType": "enum RockPaperScissors.GameStatus",
         "name": "status",
         "type": "uint8"

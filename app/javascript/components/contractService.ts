@@ -101,3 +101,20 @@ export const revealMove = async (
   console.log("Move revealed successfully");
   return tx.hash
 };
+
+export const leaveGame = async (
+  gameId: number,
+  signer: ethers.Signer
+): Promise<string> => {
+  const contract = getContract(signer);
+
+  try {
+    const tx = await contract.leaveGame(gameId);
+    await tx.wait();
+    console.log("Game left successfully");
+    return tx.hash;
+  } catch (error) {
+    console.error("Failed to leave game:", error);
+    throw error;
+  }
+};
