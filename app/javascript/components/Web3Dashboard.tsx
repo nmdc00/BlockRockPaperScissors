@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { connectWallet, disconnectWallet } from "./wallet";
-import { hasPlayerJoined, joinGame, getPlayerCount, commitMove, revealMove, leaveGame} from "./contractService";
+import { hasPlayerJoined, joinGame, getPlayerCount, commitMove, revealMove, leaveGame, getContract, getGameState} from "./contractService";
 import { ethers, keccak256, toUtf8Bytes } from "ethers";
 import styles from '../components/Web3Dashboard.module.css';
 
@@ -19,7 +19,9 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   const [commitHash, setCommitHash] = useState<string>("");
   const [betAmount, setBetAmount] = useState<string>("0.01");
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const [isPlayer1, setIsPlayer1] = useState<boolean>(false);
+  const [gameStatus, setGameStatus] = useState<number>(0); // Game status (WaitingForPlayers, MovesCommitted, etc.)
+  const [playersCommitted, setPlayersCommitted] = useState<boolean>(false); // Whether both players committed
+
 
   useEffect(() => {
     setWalletAddress(null); // Ensure it resets on refresh
@@ -80,32 +82,56 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     }
   };
 
+  useEffect(() => {
+    if (!walletAddress) return; // Only set up listener if wallet is connected
+  
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const contract = getContract(provider);
+  
+    const handleGameCompleted = (eventGameId, winner, pot) => {
+      if (Number(eventGameId) === gameId) { // Only listen for this game
+        console.log(`Game ${eventGameId} completed! Winner: ${winner}, Pot: ${ethers.formatEther(pot)} ETH`);
+        setStatusMessage(`🎉 Game #${eventGameId} completed! Winner: ${winner}, Pot: ${ethers.formatEther(pot)} ETH`);
+      }
+    };
+  
+    // Attach listener
+    contract.on("GameCompleted", handleGameCompleted);
+  
+    // Cleanup listener on unmount or game change
+    return () => {
+      contract.off("GameCompleted", handleGameCompleted);
+    };
+  }, [walletAddress, gameId]);
+  
   const handleCommitMove = async () => {
-
     if (!secret) {
       setStatusMessage("Secret is missing. Did you join the game?");
       console.error("Secret is missing.");
       return;
     }
-
+  
     if (!move || move === 0 ) {
       setStatusMessage("Please select a move.");
       return;
     }
-
+  
     try {  
       const provider = new ethers.BrowserProvider((window as any).ethereum);
       const signer = await provider.getSigner();
       
       console.log("Committing move:", move, "with secret:", secret);
-
-      await commitMove(gameId, commitHash, signer);
-      setStatusMessage("Move committed successfully!");
+  
+      // ✅ Pass move and secret directly (commitHash is computed internally)
+      await commitMove(gameId, move, secret, signer);
+      setStatusMessage("Move committed successfully! Now wait or reveal.");
+  
     } catch (error: any) {
       console.error("Error committing move:", error);
       setStatusMessage("Failed to commit move.");
     }
   };
+  
 
   const handleMoveSelection = (selectedMove: number) => {
     console.log("selectedMove:", selectedMove)
@@ -125,6 +151,30 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     console.log("Commitment Hash:", hash)
   };
 
+  useEffect(() => {
+    const fetchGameState = async () => {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      try {
+        const state = await getGameState(provider, gameId);
+  
+        // Check if both players have committed
+        const bothCommitted = 
+          state.player1.hashedMove !== "0x0000000000000000000000000000000000000000000000000000000000000000" &&
+          state.player2.hashedMove !== "0x0000000000000000000000000000000000000000000000000000000000000000";
+  
+        setPlayersCommitted(bothCommitted);
+        setGameStatus(Number(state.status));
+      } catch (error) {
+        console.error("Error fetching game state:", error);
+      }
+    };
+  
+    fetchGameState();
+    const interval = setInterval(fetchGameState, 3000); // Check every 3 seconds
+  
+    return () => clearInterval(interval);
+  }, [gameId]);
+  
   const handleRevealMove = async () => {
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
@@ -263,8 +313,10 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
                   </select>
   
                   <p>Your secret (keep this safe for reveal): {secret}</p>
-                  {commitHash && <p>Your commitment hash: {commitHash}</p>}
-  
+                  {playersCommitted && commitHash && (
+                    <button className={styles.button} onClick={handleRevealMove}>Reveal Move</button>
+                  )}
+                    
                   <button className={styles.button} onClick={handleCommitMove}>Commit Move</button>
                 </div>
               )}

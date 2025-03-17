@@ -108,27 +108,37 @@ contract RockPaperScissors {
       msg.sender == game.player1.addr || msg.sender == game.player2.addr, 
       "You are not part of this game"
     );
-    require(game.isActive, "Game not active");
     
-    game.isActive = false;
-    
+    uint256 refundAmount = 0;
+
     //Player1 leaving
     if (msg.sender == game.player1.addr) {
       game.player1 = Player(payable(address(0)), bytes32(0), Move.None, 0);
+      refundAmount = game.betAmount;
+      game.player1.addr.transfer(refundAmount);
     }
 
     //Player2 leaving
     if (msg.sender == game.player2.addr) {
       game.player2 = Player(payable(address(0)), bytes32(0), Move.None, 0);
+      refundAmount = game.betAmount;
+      game.player2.addr.transfer(refundAmount);
     }
-
-    //Remove player from tracking
-    activeGame[msg.sender] = 0;
+    
+    //Refund pot if both players leave
+    if (game.pot >= refundAmount) {
+      game.pot -= refundAmount;
+    }
     
     // Reset game status if no players are left
     if (game.player1.addr == address(0) && game.player2.addr == address(0)) {
         game.status = GameStatus.WaitingForPlayers;
+        game.pot = 0;
+        game.betAmount = 0;
+        game.isActive = false;
     }
+
+    activeGame[msg.sender] = 0;
 
     emit PlayerLeft(gameId, msg.sender);
   }
@@ -186,25 +196,39 @@ contract RockPaperScissors {
 
     address payable winner = payable(address(0)); // Default to no winner
 
+    //Draw
     if (game.player1.revealedMove == game.player2.revealedMove) {
-      game.player1.addr.transfer(game.pot / 2);
-      game.player2.addr.transfer(game.pot / 2);
+      uint256 halfPot = game.pot / 2;
+      game.player1.addr.transfer(halfPot);
+      game.player2.addr.transfer(halfPot);
+      emit GameCompleted(gameId, address(0), game.pot); // No winner in a tie
     }
+    //Player1 wins
     else if (
       (game.player1.revealedMove == Move.Rock && game.player2.revealedMove == Move.Scissors) ||
       (game.player1.revealedMove == Move.Scissors && game.player2.revealedMove == Move.Paper ) ||
       (game.player1.revealedMove == Move.Paper && game.player2.revealedMove == Move.Rock)
     ) {
+
       winner = game.player1.addr;
       winner.transfer(game.pot);
+      emit GameCompleted(gameId, winner, game.pot);
+
+    //Player2 wins
     } else {
+
       winner = game.player2.addr;
       winner.transfer(game.pot);
+      emit GameCompleted(gameId, winner, game.pot);
     }
-    
-    emit GameCompleted(gameId, winner, game.pot);
+
+    //Game is completed
     game.status = GameStatus.Completed;
     game.isActive = false;
+
+    //Clear active games
+    activeGame[game.player1.addr] = 0;
+    activeGame[game.player2.addr] = 0;
   }
 
   function getPlayerCount(uint256 gameId) public view returns (uint256) {

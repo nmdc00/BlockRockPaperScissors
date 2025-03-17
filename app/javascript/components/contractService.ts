@@ -69,16 +69,17 @@ export const getPlayerCount = async (
 
 export const commitMove = async (
   gameId: number,
-  commitHash: string,
+  move: number,
+  secret: string,
   signer: ethers.Signer
 ): Promise<void> => {
   try {
     const contract = getContract(signer);
 
-    console.log("Generated commit hash:", commitHash);
+    console.log("Generated commit hash:", secret);
 
     // Call commitMove on the contract
-    const tx = await contract.commitMove(gameId, commitHash);
+    const tx = await contract.commitMove(gameId, secret);
     console.log("Transaction submitted:", tx.hash);
 
     await tx.wait();
@@ -119,3 +120,15 @@ export const leaveGame = async (
     throw error;
   }
 };
+
+export const getGameState = async (provider: ethers.Provider, gameId: number)
+: Promise<any> => {
+  const contract = getContract(provider);
+  const game = await contract.games(gameId);
+
+  return {
+    player1: game.player1,
+    player2: game.player2,
+    status: game.status,
+  }
+}
