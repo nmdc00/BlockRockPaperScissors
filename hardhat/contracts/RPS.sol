@@ -88,7 +88,10 @@ contract RockPaperScissors {
 
       game.player2 = Player(payable(msg.sender), bytes32(0), Move.None, block.timestamp);
       game.status = GameStatus.MovesCommitted;
+
       game.isActive = true;
+      game.startTime = block.timestamp; 
+
       activeGame[msg.sender] = gameId; // Store active game
       emit PlayerJoined(gameId, msg.sender);
     } else {
@@ -108,16 +111,20 @@ contract RockPaperScissors {
     require(game.isActive, "Game not active");
     
     game.isActive = false;
-    //Can only leave if both players havent r
+    
     //Player1 leaving
     if (msg.sender == game.player1.addr) {
       game.player1 = Player(payable(address(0)), bytes32(0), Move.None, 0);
     }
 
+    //Player2 leaving
     if (msg.sender == game.player2.addr) {
       game.player2 = Player(payable(address(0)), bytes32(0), Move.None, 0);
     }
 
+    //Remove player from tracking
+    activeGame[msg.sender] = 0;
+    
     // Reset game status if no players are left
     if (game.player1.addr == address(0) && game.player2.addr == address(0)) {
         game.status = GameStatus.WaitingForPlayers;
