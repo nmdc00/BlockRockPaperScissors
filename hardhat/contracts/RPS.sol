@@ -21,6 +21,9 @@ contract RockPaperScissors {
     Player player1; 
     Player player2;
     uint256 pot;
+    uint256 betAmount;
+    uint256 startTime;
+    bool isActive;  
     GameStatus status;
   }
 
@@ -67,7 +70,7 @@ contract RockPaperScissors {
     return gameCounter;
   }
 
-  function joinGame(uint256 gameId) external {
+  function joinGame(uint256 gameId) external payable {
     require(gameId > 0, "Invalid gameID");
     require(activeGame[msg.sender] == 0, "You are already in a game!");
 
@@ -85,6 +88,10 @@ contract RockPaperScissors {
 
       game.player2 = Player(payable(msg.sender), bytes32(0), Move.None, block.timestamp);
       game.status = GameStatus.MovesCommitted;
+
+      game.isActive = true;
+      game.startTime = block.timestamp; 
+
       activeGame[msg.sender] = gameId; // Store active game
       emit PlayerJoined(gameId, msg.sender);
     } else {
@@ -101,17 +108,23 @@ contract RockPaperScissors {
       msg.sender == game.player1.addr || msg.sender == game.player2.addr, 
       "You are not part of this game"
     );
-
-    //Can only leave if both players havent r
+    require(game.isActive, "Game not active");
+    
+    game.isActive = false;
+    
     //Player1 leaving
     if (msg.sender == game.player1.addr) {
       game.player1 = Player(payable(address(0)), bytes32(0), Move.None, 0);
     }
 
+    //Player2 leaving
     if (msg.sender == game.player2.addr) {
       game.player2 = Player(payable(address(0)), bytes32(0), Move.None, 0);
     }
 
+    //Remove player from tracking
+    activeGame[msg.sender] = 0;
+    
     // Reset game status if no players are left
     if (game.player1.addr == address(0) && game.player2.addr == address(0)) {
         game.status = GameStatus.WaitingForPlayers;
@@ -121,6 +134,9 @@ contract RockPaperScissors {
   }
   function commitMove(uint256 gameId, bytes32 hashedMove) external {
     Game storage game = games[gameId];
+
+    require(game.isActive, "Game is not active");
+    require(block.timestamp <= game.startTime + 2 minutes, "Game timed out");
     require(game.status == GameStatus.MovesCommitted, "Game is not accepting moves");
     require(
       msg.sender == game.player1.addr || msg.sender == game.player2.addr,
@@ -135,6 +151,7 @@ contract RockPaperScissors {
 
   function revealMove(uint256 gameId, Move move, string memory secret) external {
     Game storage game = games[gameId];
+
     require(game.status == GameStatus.MovesCommitted, "Game is not in reveal phase");
 
     require(
@@ -187,6 +204,7 @@ contract RockPaperScissors {
     
     emit GameCompleted(gameId, winner, game.pot);
     game.status = GameStatus.Completed;
+    game.isActive = false;
   }
 
   function getPlayerCount(uint256 gameId) public view returns (uint256) {
