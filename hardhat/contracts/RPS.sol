@@ -44,6 +44,7 @@ contract RockPaperScissors {
   event MoveRevealed(uint256 indexed gameId, address indexed player, Move move);
   event GameCompleted(uint256 indexed gameId, address indexed winner, uint256 pot);
   event PlayerLeft(uint256 indexed gameId, address indexed player);
+  event DebugLog(string message, uint256 value);
 
   // Owner restriction modifier
   modifier onlyOwner() {
@@ -146,7 +147,7 @@ contract RockPaperScissors {
     Game storage game = games[gameId];
 
     require(game.isActive, "Game is not active");
-    require(block.timestamp <= game.startTime + 2 minutes, "Game timed out");
+    // require(block.timestamp <= game.startTime + 2 minutes, "Game timed out");
     require(game.status == GameStatus.MovesCommitted, "Game is not accepting moves");
     require(
       msg.sender == game.player1.addr || msg.sender == game.player2.addr,
@@ -157,6 +158,7 @@ contract RockPaperScissors {
       require(player.hashedMove == bytes32(0), "Move already committed");
 
       player.hashedMove = hashedMove;
+      emit MovesCommitted(gameId, msg.sender);
     }
 
   function revealMove(uint256 gameId, Move move, string memory secret) external {
@@ -186,8 +188,13 @@ contract RockPaperScissors {
     if (game.player1.revealedMove != Move.None && game.player2.revealedMove != Move.None) {
         determineWinner(gameId);
     }
+    emit DebugLog("Player 1 Move", uint256(game.player1.revealedMove));
+    emit DebugLog("Player 1 Move", uint256(game.player1.revealedMove));
+
   }
 
+  event DebugLog(string message, address addr);
+  
   function determineWinner(uint256 gameId) private {
     Game storage game = games[gameId];
     
@@ -196,6 +203,8 @@ contract RockPaperScissors {
 
     address payable winner = payable(address(0)); // Default to no winner
 
+    emit DebugLog("Determining winner", address(this)); // Log to check execution
+    
     //Draw
     if (game.player1.revealedMove == game.player2.revealedMove) {
       uint256 halfPot = game.pot / 2;
@@ -229,6 +238,8 @@ contract RockPaperScissors {
     //Clear active games
     activeGame[game.player1.addr] = 0;
     activeGame[game.player2.addr] = 0;
+    
+    emit GameCompleted(gameId, winner, game.pot);
   }
 
   function getPlayerCount(uint256 gameId) public view returns (uint256) {

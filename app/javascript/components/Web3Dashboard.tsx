@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { connectWallet, disconnectWallet } from "./wallet";
-import { hasPlayerJoined, joinGame, getPlayerCount, commitMove, revealMove, leaveGame, getContract, getGameState} from "./contractService";
-import { ethers, keccak256, toUtf8Bytes } from "ethers";
+import { hasPlayerJoined, joinGame, getPlayerCount, commitMove, revealMove, leaveGame, getContract, getGameState, checkForWinner} from "./contractService";
+import { keccak256, AbiCoder, ethers } from "ethers";
 import styles from '../components/Web3Dashboard.module.css';
 
 interface Web3DashboardProps {
@@ -88,12 +88,18 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     const provider = new ethers.BrowserProvider(window.ethereum);
     const contract = getContract(provider);
   
-    const handleGameCompleted = (eventGameId, winner, pot) => {
-      if (Number(eventGameId) === gameId) { // Only listen for this game
-        console.log(`Game ${eventGameId} completed! Winner: ${winner}, Pot: ${ethers.formatEther(pot)} ETH`);
-        setStatusMessage(`🎉 Game #${eventGameId} completed! Winner: ${winner}, Pot: ${ethers.formatEther(pot)} ETH`);
+    const handleGameCompleted = (gameId: any, winner: any, pot: ethers.BigNumberish) => {
+      if (Number(gameId) === gameId) { // Only listen for this game
+        console.log(`Game ${gameId} completed! Winner: ${winner}, Pot: ${ethers.formatEther(pot)} ETH`);
+        setStatusMessage(`🎉 Game #${gameId} completed! Winner: ${winner}, Pot: ${ethers.formatEther(pot)} ETH`);
       }
-    };
+
+      contract.on("GameCompleted", handleGameCompleted)
+
+      return () => {
+        contract.off("GameCompleted", handleGameCompleted)
+      };
+    }; [walletAddress]
   
     // Attach listener
     contract.on("GameCompleted", handleGameCompleted);
@@ -123,7 +129,7 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
       console.log("Committing move:", move, "with secret:", secret);
   
       // ✅ Pass move and secret directly (commitHash is computed internally)
-      await commitMove(gameId, move, secret, signer);
+      await commitMove(gameId, commitHash, signer);
       setStatusMessage("Move committed successfully! Now wait or reveal.");
   
     } catch (error: any) {
@@ -143,9 +149,8 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
       return;
     }
 
-    const hash = keccak256(
-      toUtf8Bytes(selectedMove.toString())
-    );
+    const abiCoder = AbiCoder.defaultAbiCoder();
+    const hash =  keccak256(abiCoder.encode(["uint8", "string"], [selectedMove, secret]));
     
     setCommitHash(hash)
     console.log("Commitment Hash:", hash)
@@ -156,7 +161,10 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
       const provider = new ethers.BrowserProvider(window.ethereum);
       try {
         const state = await getGameState(provider, gameId);
-  
+        
+        console.log("Game Status:", state.status);
+        console.log("Player 1 Move:", state.player1.revealedMove);
+        console.log("Player 2 Move:", state.player2.revealedMove);
         // Check if both players have committed
         const bothCommitted = 
           state.player1.hashedMove !== "0x0000000000000000000000000000000000000000000000000000000000000000" &&
@@ -179,13 +187,22 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     if (!signer) return setStatusMessage("Connect wallet first!")
-    try {
-      const txHash = await revealMove(gameId, move, secret, signer);
-      setStatusMessage('Move revealed. Tx: ${txHash}');
-    } catch (error) {
-      console.log(error);
-      setStatusMessage("Failed to reveal move.");
-    }
+      
+      try {
+        await revealMove(gameId, move, secret, signer);
+        setStatusMessage("Move revealed successfully! Checking for winner...");
+    
+        // Check if game has ended and there is a winner
+        setTimeout(async () => {
+          const { winner, pot } = await checkForWinner(provider, gameId);
+          if (winner) {
+            setStatusMessage(`🎉 Game #${gameId} completed! Winner: ${winner}, Pot: ${pot} ETH`);
+          }
+        }, 3000);
+      } catch (error) {
+        console.error("Error revealing move:", error);
+        setStatusMessage("Failed to reveal move.");
+      }
   };
 
   const handleLeaveGame = async () => {

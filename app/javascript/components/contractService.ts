@@ -69,17 +69,16 @@ export const getPlayerCount = async (
 
 export const commitMove = async (
   gameId: number,
-  move: number,
-  secret: string,
+  commitHash: string,
   signer: ethers.Signer
 ): Promise<void> => {
   try {
     const contract = getContract(signer);
 
-    console.log("Generated commit hash:", secret);
+    console.log("Generated commit hash:", commitHash);
 
     // Call commitMove on the contract
-    const tx = await contract.commitMove(gameId, secret);
+    const tx = await contract.commitMove(gameId, commitHash);
     console.log("Transaction submitted:", tx.hash);
 
     await tx.wait();
@@ -96,12 +95,16 @@ export const revealMove = async (
   secret: string,
   signer: ethers.Signer
 ) => {
-  const contract = getContract(signer);
+  try {
+    const contract = getContract(signer);
 
-  const tx = await contract.revealMove(gameId, move, secret);
-  await tx.wait()
-  console.log("Move revealed successfully");
-  return tx.hash
+    const tx = await contract.revealMove(gameId, move, secret);
+    await tx.wait()
+    console.log("Move revealed successfully");
+  } catch (error) {
+    console.error("Failed to reveal move", error)
+    throw error;
+  }
 };
 
 export const leaveGame = async (
@@ -132,3 +135,37 @@ export const getGameState = async (provider: ethers.Provider, gameId: number)
     status: game.status,
   }
 }
+
+export const checkForWinner = async (
+  provider: ethers.Provider,
+  gameId: number
+): Promise<{ winner: string; pot: string }> => {
+  const contract = getContract(provider);
+  try {
+    const game = await contract.games(gameId);
+    
+    if (Number(game.status) !== 2) {
+      return { winner: "", pot: "0" }; // If game is not completed, return no winner
+    }
+
+    const filter = contract.filters.GameCompleted(gameId);
+    const logs = await contract.queryFilter(filter);
+
+    if (logs.length > 0) {
+      const parsedEvent = contract.interface.parseLog(logs[0]); // Parse the event safely
+      if (!parsedEvent || !parsedEvent.args) {
+        console.warn("No valid winner event found");
+        return { winner: "", pot: "0" };
+      }
+
+      const winner = parsedEvent.args[1]; // Winner address
+      const pot = parsedEvent.args[2]; // Pot amount
+      return { winner, pot: ethers.formatEther(pot) };
+    }
+
+    return { winner: "", pot: "0" }; // Default if no event found
+  } catch (error) {
+    console.error("Error checking for winner:", error);
+    return { winner: "", pot: "0" };
+  }
+};
