@@ -139,13 +139,14 @@ export const getGameState = async (provider: ethers.Provider, gameId: number)
 export const checkForWinner = async (
   provider: ethers.Provider,
   gameId: number
-): Promise<{ winner: string; pot: string }> => {
+): Promise<{ winner: string; pot: string, result: string }> => {
   const contract = getContract(provider);
+
   try {
     const game = await contract.games(gameId);
     
     if (Number(game.status) !== 2) {
-      return { winner: "", pot: "0" }; // If game is not completed, return no winner
+      return { winner: "", pot: "0", result: "" }; // If game is not completed, return no winner
     }
 
     const filter = contract.filters.GameCompleted(gameId);
@@ -155,17 +156,39 @@ export const checkForWinner = async (
       const parsedEvent = contract.interface.parseLog(logs[0]); // Parse the event safely
       if (!parsedEvent || !parsedEvent.args) {
         console.warn("No valid winner event found");
-        return { winner: "", pot: "0" };
+        return { winner: "", pot: "0", result: "" };
       }
 
       const winner = parsedEvent.args[1]; // Winner address
       const pot = parsedEvent.args[2]; // Pot amount
-      return { winner, pot: ethers.formatEther(pot) };
+      
+      const move1 = Number(game.player1.revealedMove);
+      const move2 = Number(game.player2.revealedMove);
+
+      let result = "";
+      
+      if (move1 === move2) {
+        result = "It's a draw!";
+      } else if (
+        (move1 === 1 && move2 === 3) ||
+        (move1 === 2 && move2 === 1) ||
+        (move1 === 3 && move2 === 2) 
+      ) {
+        result = `${getMoveName(move1)} beat ${getMoveName(move2)}`;
+      } else {
+        result = `${getMoveName(move2)} beat ${getMoveName(move1)}`;
+      }
+
+      return { winner, pot: ethers.formatEther(pot), result };
     }
 
-    return { winner: "", pot: "0" }; // Default if no event found
+    return { winner: "", pot: "0", result: "" }; // Default if no event found
   } catch (error) {
     console.error("Error checking for winner:", error);
-    return { winner: "", pot: "0" };
+    return { winner: "", pot: "0", result: "" };
   }
 };
+
+const getMoveName = (move: number): string => {
+  return move === 1 ? 'Block' : move === 2 ? "Paper" : "Scissors";
+}

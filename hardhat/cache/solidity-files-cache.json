@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/nuno/projects/BlockRockPaperScissors/hardhat/contracts/RPS.sol": {
-      "lastModificationDate": 1742310803981,
-      "contentHash": "d54bfbd52bf39f9b803bb7407e678c94",
+      "lastModificationDate": 1742315861105,
+      "contentHash": "627cea19006303d89a815fc2ff5d4f5a",
       "sourceName": "contracts/RPS.sol",
       "solcConfig": {
         "version": "0.8.20",

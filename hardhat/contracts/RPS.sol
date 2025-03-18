@@ -194,7 +194,7 @@ contract RockPaperScissors {
   }
 
   event DebugLog(string message, address addr);
-  
+
   function determineWinner(uint256 gameId) private {
     Game storage game = games[gameId];
     
@@ -202,15 +202,12 @@ contract RockPaperScissors {
     require(game.player2.revealedMove != Move.None, "Player2 move not revealed");
 
     address payable winner = payable(address(0)); // Default to no winner
-
-    emit DebugLog("Determining winner", address(this)); // Log to check execution
     
     //Draw
     if (game.player1.revealedMove == game.player2.revealedMove) {
       uint256 halfPot = game.pot / 2;
-      game.player1.addr.transfer(halfPot);
-      game.player2.addr.transfer(halfPot);
-      emit GameCompleted(gameId, address(0), game.pot); // No winner in a tie
+      payable(game.player1.addr).transfer(halfPot);
+      payable(game.player2.addr).transfer(halfPot);
     }
     //Player1 wins
     else if (
@@ -218,28 +215,23 @@ contract RockPaperScissors {
       (game.player1.revealedMove == Move.Scissors && game.player2.revealedMove == Move.Paper ) ||
       (game.player1.revealedMove == Move.Paper && game.player2.revealedMove == Move.Rock)
     ) {
-
+      //Player1 wins
       winner = game.player1.addr;
-      winner.transfer(game.pot);
-      emit GameCompleted(gameId, winner, game.pot);
-
-    //Player2 wins
     } else {
-
+      //Player2 wins
       winner = game.player2.addr;
+    }
+
+    if (winner != address(0)) {
       winner.transfer(game.pot);
       emit GameCompleted(gameId, winner, game.pot);
     }
 
-    //Game is completed
+    // Reset game
     game.status = GameStatus.Completed;
     game.isActive = false;
-
-    //Clear active games
     activeGame[game.player1.addr] = 0;
     activeGame[game.player2.addr] = 0;
-    
-    emit GameCompleted(gameId, winner, game.pot);
   }
 
   function getPlayerCount(uint256 gameId) public view returns (uint256) {
