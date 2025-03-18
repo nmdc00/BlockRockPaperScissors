@@ -8,6 +8,44 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "string",
+        "name": "message",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "DebugLog",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "message",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "DebugLog",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "uint256",
         "name": "gameId",
