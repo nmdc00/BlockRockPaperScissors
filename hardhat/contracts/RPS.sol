@@ -77,29 +77,30 @@ contract RockPaperScissors {
 
     Game storage game = games[gameId];
     require(game.status == GameStatus.WaitingForPlayers, "");
-    
+    require(msg.value > 0, "Must send ETH to join"); // Ensure players send ETH
     // address(0) can be used to verify whether an address has been properly initialized or assigned. 
     // If a variable holds the value address(0) it indicates that the address has not been set or is invalid, enabling smart contracts to handle such cases accordingly.
     if (game.player1.addr == address(0)) {
       game.player1 = Player(payable(msg.sender), bytes32(0), Move.None, block.timestamp);
-      activeGame[msg.sender] = gameId; // Store active game
-      emit PlayerJoined(gameId, msg.sender); // Emit hashedMove for debugging
+      game.betAmount = msg.value; // ✅ Set bet amount for the game
+      game.pot += msg.value;
     } else if (game.player2.addr == address(0)) {
       require(msg.sender != game.player1.addr, "Player1 cannot join again");
 
+      require(msg.value == game.betAmount, "Player 2 must match the bet!"); // ✅ Match bet
       game.player2 = Player(payable(msg.sender), bytes32(0), Move.None, block.timestamp);
-      game.status = GameStatus.MovesCommitted;
 
+      game.pot += msg.value; // ✅ Pot = bet from both players
+      game.status = GameStatus.MovesCommitted;
       game.isActive = true;
       game.startTime = block.timestamp; 
 
-      activeGame[msg.sender] = gameId; // Store active game
-      emit PlayerJoined(gameId, msg.sender);
     } else {
       revert("Game already has two players");
     }
     
-    // emit PlayerJoined(gameId, msg.sender);
+    activeGame[msg.sender] = gameId;
+    emit PlayerJoined(gameId, msg.sender);
   }
 
   function leaveGame(uint256 gameId) external {
@@ -206,8 +207,11 @@ contract RockPaperScissors {
     //Draw
     if (game.player1.revealedMove == game.player2.revealedMove) {
       uint256 halfPot = game.pot / 2;
-      payable(game.player1.addr).transfer(halfPot);
-      payable(game.player2.addr).transfer(halfPot);
+      if (halfPot > 0) {
+        payable(game.player1.addr).transfer(halfPot);
+        payable(game.player2.addr).transfer(halfPot);
+      }
+      emit GameCompleted(gameId, winner, game.pot);
     }
     //Player1 wins
     else if (
@@ -223,13 +227,15 @@ contract RockPaperScissors {
     }
 
     if (winner != address(0)) {
-      winner.transfer(game.pot);
-      emit GameCompleted(gameId, winner, game.pot);
+      payable(winner).transfer(game.pot);
     }
+
+    emit GameCompleted(gameId, winner, game.pot);
 
     // Reset game
     game.status = GameStatus.Completed;
     game.isActive = false;
+    game.pot = 0;
     activeGame[game.player1.addr] = 0;
     activeGame[game.player2.addr] = 0;
   }

@@ -25,8 +25,13 @@ export const joinGame = async (
 
     const value = betAmount ? ethers.parseEther(betAmount) : ethers.parseEther("0");
 
-    const tx = await contract.joinGame(gameId, { value });
+    console.log(`Joining game ${gameId} with ${ethers.formatEther(value)} ETH`); // Debug log
 
+    if (value === ethers.parseEther("0")) {
+      throw new Error("Player 2 must send ETH but is trying to send 0!");
+    }
+
+    const tx = await contract.joinGame(gameId, { value });
     await tx.wait();
 
     console.log(`Successfully joined game #${gameId}`);

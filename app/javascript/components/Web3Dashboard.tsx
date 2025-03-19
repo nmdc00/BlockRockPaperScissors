@@ -82,10 +82,13 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     try {
       // Fetch player count after joining
       const count = await getPlayerCount(provider, gameId);
+      
       if (count === 0) {
+        console.log(`Player 1 joining game #${gameId} with bet ${betAmount} ETH`);
         await joinGame(gameId, signer, betAmount);
       } else {
-        await joinGame(gameId, signer)
+        console.log(`Player 2 joining game #${gameId}, matching bet ${betAmount} ETH`);
+        await joinGame(gameId, signer, betAmount)
       }
 
       //Generate secret on joining
