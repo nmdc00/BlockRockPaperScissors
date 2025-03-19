@@ -116,8 +116,12 @@ export const leaveGame = async (
   gameId: number,
   signer: ethers.Signer
 ): Promise<string> => {
-  const contract = getContract(signer);
 
+  const contract = getContract(signer);
+  const game = await contract.games(gameId);
+
+  console.log(`Game #${gameId} status: ${Number(game.status)}`);
+  
   try {
     const tx = await contract.leaveGame(gameId);
     await tx.wait();

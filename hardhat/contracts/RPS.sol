@@ -111,39 +111,46 @@ contract RockPaperScissors {
       "You are not part of this game"
     );
     
-    uint256 refundAmount = 0;
+    if (game.status == GameStatus.Completed) {
+      revert("Game has already been completed");
+    }
 
-    //Player1 leaving
+    // Calculate each player's share
+    uint256 playerShare = game.pot / 2;
+
+    //Player1 leaving and Player 2 leaving
     if (msg.sender == game.player1.addr) {
+      game.player1.addr.transfer(playerShare);
       game.player1 = Player(payable(address(0)), bytes32(0), Move.None, 0);
-      refundAmount = game.betAmount;
-      game.player1.addr.transfer(refundAmount);
-    }
-
-    //Player2 leaving
-    if (msg.sender == game.player2.addr) {
+    } else if (msg.sender == game.player2.addr) {
+      game.player2.addr.transfer(playerShare);
       game.player2 = Player(payable(address(0)), bytes32(0), Move.None, 0);
-      refundAmount = game.betAmount;
-      game.player2.addr.transfer(refundAmount);
     }
     
-    //Refund pot if both players leave
-    if (game.pot >= refundAmount) {
-      game.pot -= refundAmount;
-    }
+    game.pot -= playerShare;
+    activeGame[msg.sender] = 0;
     
-    // Reset game status if no players are left
-    if (game.player1.addr == address(0) && game.player2.addr == address(0)) {
+    // If only one player remains, they get the rest of the pot
+    if (game.player1.addr != address(0) && game.player2.addr == address(0)) {
         game.status = GameStatus.WaitingForPlayers;
         game.pot = 0;
-        game.betAmount = 0;
-        game.isActive = false;
+        activeGame[game.player1.addr] = 0;
+    } else if (game.player2.addr != address(0) && game.player1.addr == address(0)) {
+        game.player2.addr.transfer(game.pot);
+        game.pot = 0;
+        activeGame[game.player2.addr] = 0;
     }
 
-    activeGame[msg.sender] = 0;
+    // Reset game if both left
+    if (game.player1.addr == address(0) && game.player2.addr == address(0)) {
+        game.status = GameStatus.WaitingForPlayers;
+        game.isActive = false;
+        game.pot = 0;
+    }
 
     emit PlayerLeft(gameId, msg.sender);
   }
+
   function commitMove(uint256 gameId, bytes32 hashedMove) external {
     Game storage game = games[gameId];
 
