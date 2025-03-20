@@ -24,6 +24,17 @@ class EthereumRpcClient
     request('web3_sha3', [input])['result']
   end
 
+  def eth_call(to:, data:)
+    params = [{ to: to, data: data }, "latest"]
+    request("eth_call", params)["result"]
+  end
+  
+  def get_game_count(contract_address)
+    encoded_data = "0x70a08231" # Keccak-256 hash of getGameCount()
+    result = eth_call(to: contract_address, data: encoded_data)
+    result.to_i(16)
+  end
+  
   private
 
   def request(method, params = [])

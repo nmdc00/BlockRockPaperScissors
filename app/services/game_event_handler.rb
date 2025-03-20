@@ -26,4 +26,5 @@ class GameEventHandler
       game.save!
 
       puts "Game #{game_id} completed. Winner: #{winner}, Pot: #{pot} ETH"
+    end
 end
