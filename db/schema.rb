@@ -10,13 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_07_144142) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_20_160552) do
   create_table "games", force: :cascade do |t|
     t.bigint "game_id", null: false
     t.string "player1_address", null: false
     t.string "player2_address"
-    t.string "player1_move"
-    t.string "player2_move"
+    t.integer "player1_move"
+    t.integer "player2_move"
     t.string "winner"
     t.string "status", default: "waiting"
     t.decimal "pot_amount", precision: 18, scale: 8

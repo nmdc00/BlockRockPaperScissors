@@ -8,11 +8,8 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
 
-  resources :games do
-    member do
-      post :join
-      post :commit_move
-    end
+  Rails.application.routes.draw do
+    resources :games, only: [:index, :show]
   end
 
   root 'games#index'
