@@ -2,7 +2,10 @@ require 'faraday'
 require 'json'
 
 class EthereumRpcClient
-  def initialize(rpc_url)
+  def initialize(rpc_url = ENV.fetch("INFURA_RPC_URL", nil))
+
+    raise "Ethereum RPC URL not set!" unless rpc_url
+    
     @conn = Faraday.new(url: rpc_url)
   end
 
@@ -11,9 +14,12 @@ class EthereumRpcClient
   end
 
   def eth_get_logs(from_block:, to_block:, address:, topics:)
+    from_block_hex = "0x#{from_block.to_s(16)}"
+    to_block_hex = to_block == "latest" ? "latest" : "0x#{to_block.to_s(16)}"
+  
     params = {
-      fromBlock: "0x#{from_block.to_s(16)}",
-      toBlock: "0x#{to_block.to_s(16)}",
+      fromBlock: from_block_hex,
+      toBlock: to_block_hex,
       address: address,
       topics: topics
     }
@@ -38,13 +44,20 @@ class EthereumRpcClient
   private
 
   def request(method, params = [])
-    payload = {
-      jsonrpc: '2.0',
-      id: 1,
-      method: method,
-      params: params
-    }
+    payload = { jsonrpc: '2.0', id: 1, method: method, params: params }
     response = @conn.post('', JSON.dump(payload), 'Content-Type' => 'application/json')
-    JSON.parse(response.body)
+  
+    json_response = JSON.parse(response.body)
+    
+    if json_response["error"]
+      raise "Ethereum RPC Error: #{json_response['error']['message']}"
+    end
+  
+    json_response
+  rescue Faraday::ConnectionFailed => e
+    raise "Ethereum RPC Connection Failed: #{e.message}"
+  rescue JSON::ParserError
+    raise "Ethereum RPC Response was not valid JSON"
   end
+  
 end

@@ -74,3 +74,4 @@ end
 gem "web3", "~> 0.4.1"
 gem 'faraday'
 gem 'json'
+gem 'whenever', require: false
