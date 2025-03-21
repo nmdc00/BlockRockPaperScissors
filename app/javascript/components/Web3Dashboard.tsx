@@ -122,27 +122,34 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     if (!signer) return setStatusMessage("Connect wallet first!");
-
+  
     try {
       await revealMove(gameId, move, secret, signer);
-      setStatusMessage("Move revealed successfully! Checking for winner...");
-
+      setStatusMessage("✅ Move revealed! Waiting for opponent...");
+  
       const checkInterval = setInterval(async () => {
-        const contract = getContract(provider);
-        const game = await contract.games(gameId);
-
-        if (game.player1.revealedMove !== 0 && game.player2.revealedMove !== 0) {
-          clearInterval(checkInterval);
-          const { winner, pot, result } = await checkForWinner(provider, gameId);
-          setStatusMessage(`🎉 Game #${gameId} completed! Winner: ${winner}, Pot: ${pot} ETH. ${result}`);
-          setShowLeaveButton(true);
+        try {
+          const contract = getContract(provider);
+          const game = await contract.games(gameId);
+  
+          const move1 = Number(game.player1.revealedMove);
+          const move2 = Number(game.player2.revealedMove);
+  
+          // Only update message if both players have revealed
+          if (move1 !== 0 && move2 !== 0) {
+            clearInterval(checkInterval);
+            setStatusMessage("✅ Both players revealed! Awaiting final result...");
+          }
+        } catch (err) {
+          console.warn("Error checking game state:", err);
         }
       }, 3000);
     } catch (error) {
       console.error("Error revealing move:", error);
-      setStatusMessage("Failed to reveal move.");
+      setStatusMessage("❌ Failed to reveal move.");
     }
   };
+  
 
   const handleLeaveGame = async () => {
     const provider = new ethers.BrowserProvider(window.ethereum);
@@ -224,31 +231,18 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
   }, [gameId, walletAddress]);
 
   useEffect(() => {
-  const checkRevealed = async () => {
     const provider = new ethers.BrowserProvider(window.ethereum);
     const contract = getContract(provider);
-    const game = await contract.games(gameId);
+    const onGameCompleted = (gid: any, winner: any, pot: ethers.BigNumberish) => {
+      setStatusMessage(`🎉 Game #${gid} completed! Winner: ${winner}, Pot: ${ethers.formatEther(pot)} ETH`);
+      setShowLeaveButton(true);
+    };
 
-    const move1 = Number(game.player1.revealedMove);
-    const move2 = Number(game.player2.revealedMove);
-
-    // Only listen if both moves are revealed
-    if (move1 !== 0 && move2 !== 0) {
-      const onGameCompleted = (gid: any, winner: any, pot: ethers.BigNumberish) => {
-        setStatusMessage(`🎉 Game #${gid} completed! Winner: ${winner}, Pot: ${ethers.formatEther(pot)} ETH`);
-        setShowLeaveButton(true);
-      };
-
-      contract.on("GameCompleted", onGameCompleted);
-
-      return () => {
-        contract.off("GameCompleted", onGameCompleted);
-      };
-    }
-  };
-
-  checkRevealed();
-}, [walletAddress, gameId]);
+    contract.on("GameCompleted", onGameCompleted);
+    return () => {
+      contract.off("GameCompleted", onGameCompleted);
+    };
+  }, [walletAddress, gameId]);
 
   return (
     <div className={styles.wrapper}>

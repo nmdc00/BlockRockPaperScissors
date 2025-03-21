@@ -172,6 +172,7 @@ export const checkForWinner = async (
 
       let result = "";
       
+      console.log(move1, move2)
       if (move1 === move2) {
         result = "It's a draw!";
       } else if (winner.toLowerCase() === game.player1.addr.toLowerCase()) {
