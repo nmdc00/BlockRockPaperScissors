@@ -1,15 +1,6 @@
 class GamesController < ApplicationController
   def index
 		games = Game.all
-
-		render json: games.map { |game|
-			{
-				game_id: game.game_id,
-				player_count: game.player2_address.nil? ? 1 : 2,
-				pot_amount: game.pot_amount.to_f,
-				status: game.status
-			}
-		}
 	end
 
 	def show	

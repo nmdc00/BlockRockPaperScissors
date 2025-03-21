@@ -1,7 +1,8 @@
 class GameSyncService
   def initialize
-    @rpc_client = @rpc_client = EthereumRpcClient.new(ENV.fetch("SEPOLIA_RPC_URL"))
+    @rpc_client = EthereumRpcClient.new(ENV.fetch("SEPOLIA_RPC_URL"))
     @contract_address = ENV["CONTRACT_ADDRESS"] || raise("Contract address missing!")
+    @event_topic_hash = "0xa26856d25e558c79e1632806bc6824075cf59885a115825f2aab62385a3f7142"
   end
 
   def sync_all_games
@@ -13,7 +14,7 @@ class GameSyncService
       from_block: from_block,
       to_block: "latest",
       address: contract_address,
-      topics: ["0xEVENT_TOPIC_HASH"] # Replace with actual event topic hash
+      topics: [@event_topic_hash]
     )
 
     logs.each { |log| process_log(log) }
@@ -41,9 +42,9 @@ class GameSyncService
     return unless log["topics"].size >= 3 && log["data"]
   
     {
-      game_id: log["topics"][1].to_i(16),
+      game_id: log["data"][0, 66].to_i(16),
       player1: "0x" + log["topics"][2][-40..],
-      player2: log["topics"][3] ? "0x" + log["topics"][3][-40..] : nil, # Handle missing player2
+      player2: log["topics"].size > 3 ? "0x" + log["topics"][3][-40..] : nil,
       pot: log["data"].to_i(16) / 10**18, # Convert from wei to ETH
       status: "committed" # Update dynamically if possible
     }
