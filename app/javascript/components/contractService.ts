@@ -174,11 +174,7 @@ export const checkForWinner = async (
       
       if (move1 === move2) {
         result = "It's a draw!";
-      } else if (
-        (move1 === 1 && move2 === 3) ||
-        (move1 === 2 && move2 === 1) ||
-        (move1 === 3 && move2 === 2) 
-      ) {
+      } else if (winner.toLowerCase() === game.player1.addr.toLowerCase()) {
         result = `${getMoveName(move1)} beat ${getMoveName(move2)}`;
       } else {
         result = `${getMoveName(move2)} beat ${getMoveName(move1)}`;
