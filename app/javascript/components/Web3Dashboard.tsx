@@ -83,13 +83,19 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
       // Fetch player count after joining
       const count = await getPlayerCount(provider, gameId);
       
+      let amount = betAmount;
+      
       if (count === 0) {
         console.log(`Player 1 joining game #${gameId} with bet ${betAmount} ETH`);
         await joinGame(gameId, signer, betAmount);
       } else {
+        const contract = getContract(provider);
+        const game = await contract.games(gameId);
+        amount = ethers.formatEther(game.betAmount)
         console.log(`Player 2 joining game #${gameId}, matching bet ${betAmount} ETH`);
-        await joinGame(gameId, signer, betAmount)
       }
+
+      await joinGame(gameId, signer, amount)
 
       //Generate secret on joining
       const generatedSecret = ethers.hexlify(ethers.randomBytes(16));
