@@ -238,6 +238,8 @@ contract RockPaperScissors {
     game.pot = 0;
     activeGame[game.player1.addr] = 0;
     activeGame[game.player2.addr] = 0;
+    game.player1 = Player(payable(address(0)), bytes32(0), Move.None, 0);
+    game.player2 = Player(payable(address(0)), bytes32(0), Move.None, 0);
   }
 
   function getPlayerCount(uint256 gameId) public view returns (uint256) {
