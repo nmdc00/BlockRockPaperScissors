@@ -11,7 +11,7 @@ import {
   getGameState,
   checkForWinner
 } from "./contractService";
-import { keccak256, AbiCoder, ethers } from "ethers";
+import { keccak256, AbiCoder, ethers, resolveAddress } from "ethers";
 import styles from '../components/Web3Dashboard.module.css';
 
 const contractABI = require("/home/nuno/projects/BlockRockPaperScissors/hardhat/contractABI.json");
@@ -126,27 +126,28 @@ const Web3Dashboard: React.FC<Web3DashboardProps> = ({ contractAddress }) => {
     try {
       await revealMove(gameId, move, secret, signer);
       setStatusMessage("✅ Move revealed! Waiting for opponent...");
+      
+      let attempts = 0;
+      let maxAttempts = 10;
   
-      const checkInterval = setInterval(async () => {
-        try {
-          const contract = getContract(provider);
-          const game = await contract.games(gameId);
+      const pollForWinner = async () => {
+        const { winner, pot, result } = await checkForWinner(provider, gameId);
   
-          const move1 = Number(game.player1.revealedMove);
-          const move2 = Number(game.player2.revealedMove);
-  
-          // Only update message if both players have revealed
-          if (move1 !== 0 && move2 !== 0) {
-            clearInterval(checkInterval);
-            setStatusMessage("✅ Both players revealed! Awaiting final result...");
-          }
-        } catch (err) {
-          console.warn("Error checking game state:", err);
+        if (winner && pot !== "0") {
+          setStatusMessage(`🎉 Game #${gameId} completed! Winner: ${winner}, Pot: ${pot} ETH. ${result}`);
+          setShowLeaveButton(true);
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(pollForWinner, 2000); // Try again in 2s
+        } else {
+          setStatusMessage("Please wait a second..");
         }
-      }, 3000);
+      };
+  
+      pollForWinner();
     } catch (error) {
       console.error("Error revealing move:", error);
-      setStatusMessage("❌ Failed to reveal move.");
+      setStatusMessage("Failed to reveal move.");
     }
   };
   

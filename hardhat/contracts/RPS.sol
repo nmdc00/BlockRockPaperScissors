@@ -199,7 +199,7 @@ contract RockPaperScissors {
 
   }
 
-  event DebugLog(string message, address addr);
+  event DebugLog(string message, uint256 value);
 
   function determineWinner(uint256 gameId) private {
     Game storage game = games[gameId];
