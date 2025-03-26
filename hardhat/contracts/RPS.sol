@@ -75,13 +75,8 @@ contract RockPaperScissors {
     require(gameId > 0, "Invalid gameID");
     require(activeGame[msg.sender] == 0, "You are already in a game!");
 
-    if (games[gameId].status == GameStatus.Completed) {
-      delete games[gameId];
-    }
-
     Game storage game = games[gameId];
-
-    require(game.status == GameStatus.WaitingForPlayers, "Game not joinable");
+    require(game.status == GameStatus.WaitingForPlayers, "");
     require(msg.value > 0, "Must send ETH to join"); // Ensure players send ETH
     // address(0) can be used to verify whether an address has been properly initialized or assigned. 
     // If a variable holds the value address(0) it indicates that the address has not been set or is invalid, enabling smart contracts to handle such cases accordingly.
@@ -103,7 +98,7 @@ contract RockPaperScissors {
     } else {
       revert("Game already has two players");
     }
-
+    
     activeGame[msg.sender] = gameId;
     emit PlayerJoined(gameId, msg.sender);
   }
@@ -199,7 +194,7 @@ contract RockPaperScissors {
 
   }
 
-  event DebugLog(string message, uint256 value);
+  event DebugLog(string message, address addr);
 
   function determineWinner(uint256 gameId) private {
     Game storage game = games[gameId];
@@ -243,8 +238,6 @@ contract RockPaperScissors {
     game.pot = 0;
     activeGame[game.player1.addr] = 0;
     activeGame[game.player2.addr] = 0;
-    game.player1 = Player(payable(address(0)), bytes32(0), Move.None, 0);
-    game.player2 = Player(payable(address(0)), bytes32(0), Move.None, 0);
   }
 
   function getPlayerCount(uint256 gameId) public view returns (uint256) {
