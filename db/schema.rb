@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_07_144142) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_07_144142) do
   create_table "games", force: :cascade do |t|
     t.bigint "game_id", null: false
     t.string "player1_address", null: false
@@ -24,5 +24,4 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_07_144142) do
     t.datetime "updated_at", null: false
     t.index ["game_id"], name: "index_games_on_game_id", unique: true
   end
-
 end

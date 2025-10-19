@@ -20,6 +20,6 @@
   },
   "scripts": {
     "build": "esbuild app/javascript/components/application.tsx --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets",
-    "devjs": "esbuild app/javascript/components/application.tsx --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets --watch"
+    "devjs": "esbuild app/javascript/components/application.tsx --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets --watch=forever"
   }
 }

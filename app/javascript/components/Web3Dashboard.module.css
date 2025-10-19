@@ -1,51 +1,334 @@
+/* Terraria-Inspired Component Styles for Block Paper Scissors */
+
 .wrapper {
-  padding: 20px;
-  max-width: 500px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  padding: 30px;
+  max-width: 800px;
+  margin: 40px auto;
+  background: linear-gradient(135deg, var(--terraria-accent) 0%, var(--terraria-earth) 100%);
+  border: 4px solid var(--terraria-border);
+  border-radius: 0;
+  box-shadow:
+    0 0 0 4px var(--terraria-dark),
+    0 8px 32px rgba(0, 0, 0, 0.8),
+    inset 0 2px 0 rgba(255, 255, 255, 0.1);
   text-align: center;
+  position: relative;
+  color: var(--text-primary);
+}
+
+.wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.1) 2px,
+      rgba(0, 0, 0, 0.1) 4px
+    );
+  pointer-events: none;
+  opacity: 0.3;
 }
 
 .title {
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 20px;
+  margin-bottom: 30px;
+  color: var(--terraria-gold);
+  text-shadow:
+    3px 3px 0 var(--terraria-dark),
+    -1px -1px 0 rgba(255, 215, 0, 0.5);
+  letter-spacing: 2px;
+  animation: titleGlow 2s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
 }
 
-.walletSection, .gameSection, .commitSection {
-  margin-bottom: 20px;
+@keyframes titleGlow {
+  0%, 100% { text-shadow: 3px 3px 0 var(--terraria-dark), -1px -1px 0 rgba(255, 215, 0, 0.5); }
+  50% { text-shadow: 3px 3px 0 var(--terraria-dark), -1px -1px 0 rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.4); }
+}
+
+.walletSection, .gameSection, .commitSection, .resultSection {
+  margin-bottom: 25px;
+  padding: 20px;
+  background: rgba(26, 26, 46, 0.6);
+  border: 3px solid var(--terraria-stone);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.walletSection {
+  border-color: var(--terraria-blue);
+}
+
+.gameSection {
+  border-color: var(--terraria-green);
+}
+
+.commitSection {
+  border-color: var(--terraria-gold);
+}
+
+.walletSection p {
+  font-size: 10px;
+  color: var(--terraria-blue);
+  word-break: break-all;
+  line-height: 1.6;
+  margin: 10px 0;
 }
 
 .input {
   width: 100%;
-  padding: 8px;
-  margin: 8px 0;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  border: 3px solid var(--terraria-stone);
+  background: var(--terraria-dark);
+  color: var(--text-primary);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.input:focus {
+  border-color: var(--terraria-green);
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.6),
+    0 0 12px rgba(78, 204, 163, 0.4);
+}
+
+.input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+select.input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234ecca3' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+label {
+  display: block;
+  font-size: 10px;
+  color: var(--terraria-gold);
+  margin-bottom: 8px;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .button {
-  padding: 10px 20px;
-  margin-top: 10px;
-  border: none;
-  background: #4CAF50;
-  color: white;
-  border-radius: 6px;
+  padding: 14px 28px;
+  margin: 10px 8px;
+  border: 3px solid var(--terraria-green);
+  background: linear-gradient(180deg, #5eddb4 0%, var(--terraria-green) 100%);
+  color: var(--terraria-dark);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
   cursor: pointer;
+  box-shadow:
+    0 4px 0 #3da882,
+    0 6px 12px rgba(0, 0, 0, 0.5);
+  transition: all 0.1s;
+  text-transform: uppercase;
+  position: relative;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 0 #3da882,
+    0 8px 16px rgba(0, 0, 0, 0.6);
+}
+
+.button:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 #3da882,
+    0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .leaveButton {
-  padding: 10px 20px;
-  margin-top: 10px;
-  border: none;
-  background: #e74c3c;
+  padding: 14px 28px;
+  margin: 10px 8px;
+  border: 3px solid var(--terraria-red);
+  background: linear-gradient(180deg, #f87171 0%, var(--terraria-red) 100%);
   color: white;
-  border-radius: 6px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
   cursor: pointer;
+  box-shadow:
+    0 4px 0 #b91c1c,
+    0 6px 12px rgba(0, 0, 0, 0.5);
+  transition: all 0.1s;
+  text-transform: uppercase;
+}
+
+.leaveButton:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 0 #b91c1c,
+    0 8px 16px rgba(0, 0, 0, 0.6);
+}
+
+.leaveButton:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 #b91c1c,
+    0 3px 6px rgba(0, 0, 0, 0.5);
 }
 
 .statusMessage {
-  margin-top: 15px;
-  color: #333;
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--terraria-blue);
+  color: var(--terraria-blue);
+  font-size: 9px;
+  line-height: 1.8;
+  border-radius: 0;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  animation: messageSlide 0.3s ease-out;
+}
+
+@keyframes messageSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.moveButtons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.moveButton {
+  width: 120px;
+  height: 120px;
+  border: 4px solid var(--terraria-stone);
+  background: linear-gradient(135deg, var(--terraria-accent) 0%, var(--terraria-dark) 100%);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  font-size: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.moveButton:hover {
+  transform: scale(1.05);
+  border-color: var(--terraria-gold);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.7),
+    0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.moveButton.selected {
+  border-color: var(--terraria-green);
+  background: linear-gradient(135deg, #3da882 0%, var(--terraria-green) 100%);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.7),
+    0 0 30px rgba(78, 204, 163, 0.5);
+}
+
+.moveButton::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-family: 'Press Start 2P', cursive;
+}
+
+.infoPanel {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 15px;
+  margin: 15px 0;
+  border: 2px solid var(--terraria-stone);
+  text-align: left;
+  font-size: 9px;
+  line-height: 2;
+}
+
+.infoPanel strong {
+  color: var(--terraria-gold);
+}
+
+.waitingMessage {
+  padding: 20px;
+  background: rgba(74, 144, 226, 0.1);
+  border: 2px dashed var(--terraria-blue);
+  color: var(--terraria-blue);
+  font-size: 10px;
+  margin: 20px 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.divider {
+  height: 3px;
+  background: var(--terraria-stone);
+  margin: 25px 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .wrapper {
+    padding: 20px;
+    margin: 20px 10px;
+  }
+
+  .title {
+    font-size: 14px;
+  }
+
+  .button, .leaveButton {
+    font-size: 8px;
+    padding: 12px 20px;
+  }
+
+  .moveButton {
+    width: 90px;
+    height: 90px;
+    font-size: 36px;
+  }
+
+  .input, label, .statusMessage {
+    font-size: 8px;
+  }
 }

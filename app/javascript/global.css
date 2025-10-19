@@ -1,0 +1,30 @@
+/* Global Terraria-Inspired Theme */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  --terraria-bg: #1a1a2e;
+  --terraria-dark: #0f0f1e;
+  --terraria-accent: #16213e;
+  --terraria-earth: #3d2817;
+  --terraria-stone: #4a4a4a;
+  --terraria-green: #4ecca3;
+  --terraria-blue: #4a90e2;
+  --terraria-gold: #ffd700;
+  --terraria-red: #ef4444;
+  --terraria-border: #8b7355;
+  --text-primary: #e8e8e8;
+  --text-secondary: #b8b8b8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: linear-gradient(180deg, var(--terraria-dark) 0%, var(--terraria-bg) 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-family: 'Press Start 2P', cursive;
+}

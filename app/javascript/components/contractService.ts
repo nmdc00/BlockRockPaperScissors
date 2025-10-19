@@ -1,5 +1,5 @@
 import { ethers, BrowserProvider, Contract } from "ethers";
-const contractABI = require("/home/nuno/projects/BlockRockPaperScissors/hardhat/contractABI.json"); // Adjust path as needed
+const contractABI = require("../../../hardhat/contractABI.json");
 
 const CONTRACT_ADDRESS = window.ENV?.CONTRACT_ADDRESS;
 
